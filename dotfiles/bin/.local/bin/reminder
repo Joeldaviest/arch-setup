@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euo pipefail
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/arch-setup-reminders"
+mkdir -p "$state_dir"
+
+case ${1:-} in
+  show|list)
+    timers=$(systemctl --user list-timers --all --no-legend 'desktop-reminder-*.timer' 2>/dev/null || true)
+    notify-send 'Upcoming reminders' "${timers:-No outstanding reminders}"
+    ;;
+  clear)
+    systemctl --user stop 'desktop-reminder-*.timer' 'desktop-reminder-*.service' 2>/dev/null || true
+    rm -f "$state_dir"/*
+    notify-send 'Reminders' 'All reminders cleared'
+    ;;
+  '') echo 'Usage: reminder <minutes> [message] | show | clear' >&2; exit 2 ;;
+  *)
+    [[ $1 =~ ^[0-9]+$ ]] && (( $1 > 0 )) || { echo 'Minutes must be a positive integer' >&2; exit 2; }
+    minutes=$1; shift; message=${*:-"Your $minutes minutes are up"}
+    unit="desktop-reminder-${minutes}m-$(date +%s)"
+    systemd-run --user --quiet --collect --on-active="${minutes}m" --unit="$unit" notify-send -u critical 'Reminder' "$message"
+    notify-send 'Reminder set' "$message in $minutes minutes"
+    ;;
+esac
+

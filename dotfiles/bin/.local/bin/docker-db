@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+case ${1:-} in
+  postgres)
+    docker volume create postgres-data >/dev/null
+    docker run -d --name postgres --restart unless-stopped -e POSTGRES_PASSWORD=postgres -p 5432:5432 -v postgres-data:/var/lib/postgresql/data postgres:17
+    ;;
+  redis)
+    docker volume create redis-data >/dev/null
+    docker run -d --name redis --restart unless-stopped -p 6379:6379 -v redis-data:/data redis:7-alpine redis-server --appendonly yes
+    ;;
+  *) echo 'Usage: docker-db <postgres|redis>' >&2; exit 2 ;;
+esac

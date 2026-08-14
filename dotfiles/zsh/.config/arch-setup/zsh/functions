@@ -1,0 +1,23 @@
+iso2sd() { drive-write-iso "$@"; }
+format-drive() { drive-format-exfat "$@"; }
+transcode-video-1080p() { transcode "$1" mp4 1080p; }
+transcode-video-4K() { transcode "$1" mp4 4k; }
+transcode-video-gif() { transcode "$1" gif 1080p; }
+img2jpg() { transcode "$1" jpg high; }
+img2png() { transcode "$1" png high; }
+
+tsl() {
+  if [[ -z ${1:-} || -z ${2:-} || -z ${TMUX:-} ]]; then
+    echo "Usage (inside tmux): tsl <pane_count> <command>"
+    return 1
+  fi
+  local count=$1 cmd=$2 current_dir=$PWD
+  local -a panes=("$TMUX_PANE")
+  while (( ${#panes[@]} < count )); do
+    panes+=("$(tmux split-window -h -t "${panes[-1]}" -c "$current_dir" -P -F '#{pane_id}')")
+    tmux select-layout tiled
+  done
+  local pane
+  for pane in "${panes[@]}"; do tmux send-keys -t "$pane" "$cmd" C-m; done
+}
+

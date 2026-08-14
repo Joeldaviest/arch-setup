@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+
+close_windows() {
+  windows-close-all || true
+  sleep 1
+}
+
+action=${1:-menu}
+if [[ $action == "menu" ]]; then
+  action=$(printf '%s\n' Lock Suspend Logout Reboot Shutdown | gum choose --header 'Power') || exit 0
+  action=${action,,}
+fi
+
+case $action in
+  lock|lock-only)
+    if ! pgrep -x hyprlock >/dev/null; then
+      hyprlock &
+      disown
+    fi
+    hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
+    [[ $action == "lock-only" ]] || { sleep 3; pgrep -x hyprlock >/dev/null && hyprctl dispatch dpms off >/dev/null; } &
+    ;;
+  wake) hyprctl dispatch dpms on >/dev/null 2>&1 || true ;;
+  suspend) systemctl suspend ;;
+  logout) close_windows; uwsm stop ;;
+  reboot) close_windows; systemctl reboot ;;
+  shutdown|poweroff) close_windows; systemctl poweroff ;;
+  *) echo "Usage: desktop-power [menu|lock|wake|suspend|logout|reboot|shutdown]" >&2; exit 2 ;;
+esac
+

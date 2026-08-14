@@ -1,0 +1,17 @@
+#!/bin/bash
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/arch-setup"
+mkdir -p "$state_dir"
+state_file="$state_dir/layout"
+if [[ -f $state_file ]]; then
+  current=$(<"$state_file")
+else
+  current=dwindle
+fi
+if [[ $current == "dwindle" ]]; then
+  next=scrolling
+else
+  next=dwindle
+fi
+hyprctl keyword general:layout "$next"
+printf '%s\n' "$next" >"$state_file"
+notify-send "Layout: $next"

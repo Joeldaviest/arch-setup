@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+input=${1:-}
+format=${2:-mp4}
+quality=${3:-1080p}
+[[ -f $input ]] || { echo "Usage: transcode <file> [mp4|gif|jpg|png] [quality]" >&2; exit 2; }
+base=${input%.*}
+case $format in
+  mp4)
+    scale=-2:1080; [[ $quality == "4k" ]] && scale=-2:2160
+    ffmpeg -i "$input" -vf "scale=$scale" -c:v libx264 -crf 20 -c:a aac "${base}-${quality}.mp4"
+    ;;
+  gif) ffmpeg -i "$input" -vf 'fps=15,scale=-2:1080:flags=lanczos' "${base}.gif" ;;
+  jpg) magick "$input" -quality 90 "${base}.jpg" ;;
+  png) magick "$input" "${base}.png" ;;
+  *) echo "Unsupported format: $format" >&2; exit 2 ;;
+esac
+

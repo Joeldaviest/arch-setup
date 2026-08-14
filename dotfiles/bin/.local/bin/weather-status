@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+format=${1:-text}
+weather=$(curl -fsS --max-time 5 'https://wttr.in/?format=%c+%t+%C' 2>/dev/null || printf 'Weather unavailable')
+if [[ $format == "--json" ]]; then
+  jq -cn --arg text "$weather" '{text:$text,tooltip:$text}'
+else
+  printf '%s\n' "$weather"
+fi
+

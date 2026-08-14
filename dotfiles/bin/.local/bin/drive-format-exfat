@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+device=${1:-}
+label=${2:-}
+[[ -b $device && $(lsblk -dno TYPE "$device") == "disk" && -n $label ]] || { echo "Usage: drive-format-exfat <whole-disk-device> <label>" >&2; exit 2; }
+lsblk -nrpo MOUNTPOINT "$device" | grep -q '[^[:space:]]' && { echo "Refusing device with mounted filesystems: $device" >&2; exit 1; }
+lsblk "$device"
+printf 'This erases %s. Type the exact device path: ' "$device"
+read -r confirmation
+[[ $confirmation == "$device" ]] || { echo 'Cancelled'; exit 1; }
+sudo wipefs -a "$device"
+sudo parted -s "$device" mklabel gpt
+sudo parted -s "$device" mkpart primary 1MiB 100%
+sudo partprobe "$device"
+sudo udevadm settle
+partition="${device}1"
+[[ $device == *nvme* || $device == *mmcblk* ]] && partition="${device}p1"
+[[ -b $partition ]] || { echo "Partition did not appear: $partition" >&2; exit 1; }
+sudo mkfs.exfat -n "$label" "$partition"

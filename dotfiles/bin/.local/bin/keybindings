@@ -1,0 +1,5 @@
+#!/bin/bash
+files=("$HOME/.config/hypr/media.conf" "$HOME/.config/hypr/clipboard.conf" "$HOME/.config/hypr/tiling.conf" "$HOME/.config/hypr/bindings.conf")
+selection=$(sed -n 's/^bind[^=]*=[^,]*,[^,]*, \([^,]*\),.*/\1/p' "${files[@]}" | sort -u | walker --dmenu -p 'Keybindings' --width 800) || exit 0
+notify-send 'Keybinding' "$selection"
+

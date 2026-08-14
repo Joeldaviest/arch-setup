@@ -1,0 +1,9 @@
+#!/bin/bash
+state=${1:-toggle}
+case $state in
+  on) value=true ;;
+  off) value=false ;;
+  *) current=$(hyprctl getoption input:touchpad:enabled -j | jq -r '.int'); (( current )) && value=false || value=true ;;
+esac
+hyprctl keyword input:touchpad:enabled "$value"
+

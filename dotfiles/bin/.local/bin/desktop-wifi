@@ -1,0 +1,3 @@
+#!/bin/bash
+exec uwsm-app -- xdg-terminal-exec --app-id=TUI.wifi -e impala
+

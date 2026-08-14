@@ -1,0 +1,4 @@
+#!/bin/bash
+(( $# > 0 )) || { echo "Usage: webapp-launch <url>" >&2; exit 2; }
+exec setsid uwsm-app -- chromium --app="$1" "${@:2}"
+

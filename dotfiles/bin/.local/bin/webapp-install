@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+name=${1:-}
+url=${2:-}
+if [[ -z $name ]]; then name=$(gum input --prompt 'Name> ' --placeholder 'My web app'); fi
+if [[ -z $url ]]; then url=$(gum input --prompt 'URL> ' --placeholder 'https://example.com'); fi
+[[ $url =~ ^[a-zA-Z][a-zA-Z0-9+.-]*: ]] || url="https://$url"
+
+app_dir="$HOME/.local/share/applications"
+icon_dir="$app_dir/icons"
+mkdir -p "$icon_dir"
+icon="$icon_dir/$name.png"
+curl -fsSL -o "$icon" "https://www.google.com/s2/favicons?domain=$url&sz=128" || rm -f "$icon"
+
+desktop="$app_dir/$name.desktop"
+{
+  printf '%s\n' '[Desktop Entry]' 'Version=1.0' "Name=$name" "Comment=$name"
+  printf 'Exec=webapp-launch %q\n' "$url"
+  printf '%s\n' 'Terminal=false' 'Type=Application' "Icon=$icon" 'StartupNotify=true'
+} >"$desktop"
+chmod 0755 "$desktop"
+update-desktop-database "$app_dir"
+

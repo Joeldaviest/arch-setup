@@ -1,0 +1,5 @@
+#!/bin/bash
+args=()
+[[ ${1:-} == "--private" ]] && args+=(--incognito)
+exec uwsm-app -- chromium "${args[@]}"
+

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+value=${1:-+5%}
+case $value in
+  off|on) hyprctl dispatch dpms "$value"; exit ;;
+esac
+device=$(find /sys/class/backlight -mindepth 1 -maxdepth 1 -printf '%f\n' 2>/dev/null | head -1)
+[[ -n $device ]] || exit 0
+brightnessctl -d "$device" set "$value" >/dev/null
+percent=$(brightnessctl -d "$device" -m | cut -d, -f4 | tr -d %)
+desktop-osd --custom-message "Brightness ${percent}%" --custom-icon display-brightness-symbolic
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+current=$(readlink -f "$HOME/.config/arch-setup/background")
+directory=$(dirname "$current")
+selection=$(find "$directory" -maxdepth 1 -type f | sort | walker --dmenu -p 'Wallpaper') || exit 0
+[[ -f $selection ]] || exit 0
+ln -sfn "$selection" "$HOME/.config/arch-setup/background"
+pkill -x swaybg || true
+setsid uwsm-app -- swaybg -i "$HOME/.config/arch-setup/background" -m fill >/dev/null 2>&1 &
+

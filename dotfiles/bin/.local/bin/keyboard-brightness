@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+direction=${1:-up}
+device=$(find /sys/class/leds -maxdepth 1 -name '*kbd_backlight*' -printf '%f\n' 2>/dev/null | head -1)
+[[ -n $device ]] || exit 0
+case $direction in
+  up) brightnessctl -d "$device" set +10% ;;
+  down) brightnessctl -d "$device" set 10%- ;;
+  off) brightnessctl -sd "$device" set 0 ;;
+  restore) brightnessctl -rd "$device" ;;
+  cycle)
+    current=$(brightnessctl -d "$device" get); max=$(brightnessctl -d "$device" max)
+    (( current >= max )) && brightnessctl -d "$device" set 0 || brightnessctl -d "$device" set +10%
+    ;;
+esac >/dev/null
+

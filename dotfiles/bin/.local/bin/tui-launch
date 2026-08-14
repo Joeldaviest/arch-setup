@@ -1,0 +1,4 @@
+#!/bin/bash
+(( $# > 0 )) || { echo "Usage: tui-launch <command> [args...]" >&2; exit 2; }
+exec uwsm-app -- xdg-terminal-exec --app-id="TUI.$(basename "$1")" -e "$@"
+

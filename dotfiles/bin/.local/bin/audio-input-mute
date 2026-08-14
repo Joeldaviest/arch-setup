@@ -1,0 +1,8 @@
+#!/bin/bash
+wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED; then
+  desktop-osd --custom-message 'Microphone muted' --custom-icon microphone-sensitivity-muted-symbolic
+else
+  desktop-osd --custom-message 'Microphone on' --custom-icon audio-input-microphone-symbolic
+fi
+

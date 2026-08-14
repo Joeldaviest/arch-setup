@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+device=${1:-}
+[[ -b $device ]] || { echo "Usage: drive-info </dev/device>" >&2; exit 2; }
+lsblk -o NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,MOUNTPOINTS,MODEL "$device"
+

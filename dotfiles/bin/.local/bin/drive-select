@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+mapfile -t drives < <(lsblk -dpno NAME,TYPE,SIZE,MODEL | awk '$2=="disk"')
+((${#drives[@]})) || { echo 'No drives found' >&2; exit 1; }
+selection=$(printf '%s\n' "${drives[@]}" | gum choose --header 'Select drive') || exit 1
+printf '%s\n' "$selection" | awk '{print $1}'
+

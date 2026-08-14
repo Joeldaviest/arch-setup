@@ -1,0 +1,14 @@
+# AUR helper is bootstrapped separately
+walker-bin
+elephant-all-bin
+vscodium-bin
+oh-my-zsh-git
+cliamp-bin
+localsend-bin
+claude-code
+ufw-docker
+xpadneo-dkms
+python-terminaltexteffects
+tzupdate
+ttf-ia-writer
+yaru-icon-theme

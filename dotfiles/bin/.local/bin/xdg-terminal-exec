@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+directory=$PWD
+app_id=Alacritty
+args=()
+while (($#)); do
+  case $1 in
+    --dir=*) directory=${1#*=} ;;
+    --dir) shift; directory=$1 ;;
+    --app-id=*) app_id=${1#*=} ;;
+    --app-id) shift; app_id=$1 ;;
+    -e) ;;
+    *) args+=("$1") ;;
+  esac
+  shift
+done
+command=(alacritty --working-directory "$directory" --class "$app_id")
+((${#args[@]})) && command+=(-e "${args[@]}")
+exec "${command[@]}"

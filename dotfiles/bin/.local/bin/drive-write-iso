@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+iso=${1:-}
+device=${2:-}
+[[ -f $iso ]] || { echo "Usage: drive-write-iso <image.iso> [whole-disk-device]" >&2; exit 2; }
+[[ -n $device ]] || device=$(drive-select)
+[[ -b $device && $(lsblk -dno TYPE "$device") == "disk" ]] || { echo "Refusing non-disk target: $device" >&2; exit 2; }
+lsblk -nrpo MOUNTPOINT "$device" | grep -q '[^[:space:]]' && { echo "Refusing device with mounted filesystems: $device" >&2; exit 1; }
+lsblk "$device"
+printf 'This overwrites all data on %s. Type the exact device path: ' "$device"
+read -r confirmation
+[[ $confirmation == "$device" ]] || { echo 'Cancelled'; exit 1; }
+sudo dd if="$iso" of="$device" bs=4M status=progress conv=fsync
+sudo eject "$device" 2>/dev/null || true
