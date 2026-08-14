@@ -51,8 +51,11 @@ for file in monitors.conf input.conf environment.conf autostart.conf; do
 done
 
 mkdir -p "$HOME/.config/arch-setup"
+ln -sfn "$SETUP_ROOT/assets/wallpapers" "$HOME/.config/arch-setup/wallpapers"
 if [[ ! -e $HOME/.config/arch-setup/background ]]; then
-  ln -s "$SETUP_ROOT/assets/wallpapers/0-swirl-buck.jpg" "$HOME/.config/arch-setup/background"
+  default_background=$(find "$SETUP_ROOT/assets/wallpapers" -maxdepth 1 -type f | sort | head -1)
+  [[ -n $default_background ]] || die "No wallpapers found in $SETUP_ROOT/assets/wallpapers"
+  ln -s "$default_background" "$HOME/.config/arch-setup/background"
 fi
 
 if [[ -z $(find "$backup_root" -type f -o -type l | head -1) ]]; then
