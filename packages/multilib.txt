@@ -1,0 +1,4 @@
+# Official packages from Arch's disabled-by-default multilib repository
+steam
+lib32-mesa
+umu-launcher

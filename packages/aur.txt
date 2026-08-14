@@ -1,6 +1,5 @@
 # AUR helper is bootstrapped separately
 walker-bin
-elephant-all-bin
 vscodium-bin
 oh-my-zsh-git
 cliamp-bin

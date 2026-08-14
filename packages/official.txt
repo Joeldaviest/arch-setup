@@ -125,15 +125,12 @@ pciutils
 libnotify
 
 # Gaming
-steam
 lutris
-umu-launcher
 wine-staging
 wine-mono
 wine-gecko
 winetricks
 python-protobuf
-lib32-mesa
 mesa
 
 # Fonts and desktop integration

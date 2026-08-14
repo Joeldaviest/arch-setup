@@ -7,9 +7,11 @@ while IFS= read -r script; do
   bash -n "$script"
 done < <(find "$root" -path "$root/.git" -prune -o -type f \( -name '*.sh' -o -perm -u+x \) -print)
 
-duplicates=$(comm -12 \
-  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/official.txt" | sort -u) \
-  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/aur.txt" | sort -u))
+duplicates=$(cat \
+  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/official.txt") \
+  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/multilib.txt") \
+  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/aur-preinstall.txt") \
+  <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/aur.txt") | sort | uniq -d)
 [[ -z $duplicates ]] || { echo "Duplicate classification: $duplicates" >&2; exit 1; }
 
 if grep -RInE 'pkgs\.omarchy|mirror\.omarchy|\[omarchy\]' "$root" --exclude=README.md --exclude=static.sh; then
@@ -28,14 +30,43 @@ required_helpers=(
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch waybar-toggle webapp-focus
   webapp-launch window-pop windows-close-all workspace-layout-toggle xdg-terminal-exec
-  reminder reminder-set weather-status wallpaper-select
+  reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do
   [[ -x $root/dotfiles/bin/.local/bin/$helper ]] || { echo "Missing helper: $helper" >&2; exit 1; }
 done
 
+for test_script in run.sh static.sh behavior.sh vm.sh vm-guest.sh; do
+  [[ -x $root/tests/$test_script ]] || { echo "Test script is not executable: $test_script" >&2; exit 1; }
+done
+
+cloud_reboot_line=$(grep -nF "reboot_guest 'SSH returned after the cloud-image update reboot'" "$root/tests/vm.sh" | cut -d: -f1)
+vm_ssh_rule_line=$(grep -nF "sudo ufw allow 22/tcp comment 'VM test SSH'" "$root/tests/vm.sh" | cut -d: -f1)
+setup_line=$(grep -nF "TERM=xterm-256color ./setup.sh' 2>&1" "$root/tests/vm.sh" | head -1 | cut -d: -f1)
+[[ -n $cloud_reboot_line && -n $vm_ssh_rule_line && -n $setup_line && \
+   $cloud_reboot_line -lt $vm_ssh_rule_line && $vm_ssh_rule_line -lt $setup_line ]] || {
+  echo 'VM setup must run after the cloud-image reboot and VM-only SSH firewall rule' >&2
+  exit 1
+}
+
 jq empty "$root/dotfiles/waybar/.config/waybar/config.jsonc"
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"
+
+grep -qF 'Name=en* eth*' "$root/system/20-wired.network"
+grep -qF 'DHCP=yes' "$root/system/20-wired.network"
+grep -qF 'RequiredForOnline=no' "$root/system/20-wired.network"
+[[ $(grep -cF 'RouteMetric=100' "$root/system/20-wired.network") == 3 ]]
+grep -qF 'systemd-networkd.service' "$root/scripts/configure-system.sh"
+grep -qF 'disable systemd-networkd-wait-online.service' "$root/scripts/configure-system.sh"
+if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
+  echo 'systemd-networkd configuration must not claim Wi-Fi interfaces managed by IWD' >&2
+  exit 1
+fi
+
+for protocol in udp tcp; do
+  grep -qF "proto $protocol from 172.16.0.0/12 to 172.17.0.1 port 53" "$root/scripts/configure-system.sh"
+  grep -qF "proto $protocol from 192.168.0.0/16 to 172.17.0.1 port 53" "$root/scripts/configure-system.sh"
+done
 
 hardware_case() (
   source "$root/scripts/lib/common.sh"
@@ -47,15 +78,29 @@ hardware_case() (
   [[ " ${HARDWARE_PACKAGES[*]} " == *" $3 "* || " ${HARDWARE_AUR_PACKAGES[*]} " == *" $3 "* ]]
 )
 hardware_case 'VGA compatible controller: AMD/ATI Radeon RX' Generic vulkan-radeon
+hardware_case 'Ethernet controller: Virtio network device' Generic linux-headers
+hardware_case 'Ethernet controller: Virtio network device' Generic vulkan-swrast
+hardware_case 'Ethernet controller: Virtio network device' Generic lib32-vulkan-swrast
 hardware_case 'VGA compatible controller: Intel Corporation Graphics' Generic vulkan-intel
 hardware_case 'VGA compatible controller: NVIDIA Corporation RTX 4070' Generic nvidia-open-dkms
 hardware_case 'VGA compatible controller: NVIDIA Corporation GTX 1080' Generic nvidia-580xx-dkms
 hardware_case 'Ethernet controller [1f0a:6801] YT6801' Generic yt6801-dkms
 hardware_case 'VGA compatible controller: AMD/ATI Radeon' Framework qmk-hid
 
+grep -qF 'exec-once = uwsm-app -- wallpaper-start' "$root/dotfiles/hypr/.config/hypr/autostart.conf"
+if grep -RqsF "$root/assets/wallpapers" "$root/dotfiles"; then
+  echo 'Runtime wallpaper configuration depends on the repository path' >&2
+  exit 1
+fi
+legacy_config='.config/arch''-setup'
+if grep -RqsF "$legacy_config" "$root" --exclude-dir=.git; then
+  echo 'Legacy namespaced config directory found' >&2
+  exit 1
+fi
+
 if command -v shellcheck >/dev/null; then
   mapfile -t scripts < <(find "$root" -path "$root/.git" -prune -o -type f \( -name '*.sh' -o -perm -u+x \) -print)
-  shellcheck -x -e SC1090,SC1091,SC2004,SC2015,SC2016,SC2034,SC2086,SC2119,SC2120,SC2155 "${scripts[@]}"
+  shellcheck -x -e SC1090,SC1091,SC2004,SC2015,SC2016,SC2032,SC2034,SC2086,SC2119,SC2120,SC2155 "${scripts[@]}"
 fi
 
 echo 'Static checks passed'

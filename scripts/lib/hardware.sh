@@ -15,18 +15,25 @@ installed_kernel_headers() {
 
 classify_hardware() {
   local pci=${ARCH_SETUP_TEST_PCI:-}
+  local gpu_driver_selected=false
   if [[ -z $pci ]] && command_exists lspci; then
     pci=$(lspci -nn)
   fi
 
+  # xpadneo-dkms is part of the personal base package set, so the running
+  # kernel's headers are required even when no other DKMS hardware is found.
+  HARDWARE_PACKAGES+=("$(installed_kernel_headers)")
+
   if grep -qiE '(VGA|Display).*AMD|AMD.*(VGA|Display)' <<<"$pci"; then
     HARDWARE_PACKAGES+=(mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon)
     HARDWARE_SUMMARY+=" AMD-GPU"
+    gpu_driver_selected=true
   fi
 
   if grep -qiE '(VGA|Display).*Intel|Intel.*(VGA|Display)' <<<"$pci"; then
     HARDWARE_PACKAGES+=(vulkan-intel lib32-vulkan-intel intel-media-driver)
     HARDWARE_SUMMARY+=" Intel-GPU"
+    gpu_driver_selected=true
   fi
 
   if grep -qi nvidia <<<"$pci"; then
@@ -38,6 +45,15 @@ classify_hardware() {
       HARDWARE_PACKAGES+=("$(installed_kernel_headers)" nvidia-open-dkms nvidia-utils lib32-nvidia-utils libva-nvidia-driver)
       HARDWARE_SUMMARY+=" NVIDIA-GPU"
     fi
+    gpu_driver_selected=true
+  fi
+
+  # Steam requires explicit 64-bit and 32-bit Vulkan providers. Without a
+  # recognized physical GPU (for example in the headless VM), pacman otherwise
+  # selects the first provider noninteractively, which is currently NVIDIA.
+  if [[ $gpu_driver_selected == false ]]; then
+    HARDWARE_PACKAGES+=(vulkan-swrast lib32-vulkan-swrast)
+    HARDWARE_SUMMARY+=" software-Vulkan"
   fi
 
   if grep -qi 'Broadcom.*Network' <<<"$pci"; then

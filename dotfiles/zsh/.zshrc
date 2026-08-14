@@ -6,8 +6,7 @@ ZSH_THEME="awesomepanda"
 plugins=(git docker docker-compose)
 
 source "$ZSH/oh-my-zsh.sh"
-source "$HOME/.config/arch-setup/zsh/envs"
-source "$HOME/.config/arch-setup/zsh/aliases"
-source "$HOME/.config/arch-setup/zsh/functions"
-source "$HOME/.config/arch-setup/zsh/init"
-
+source "$HOME/.config/zsh/envs"
+source "$HOME/.config/zsh/aliases"
+source "$HOME/.config/zsh/functions"
+source "$HOME/.config/zsh/init"

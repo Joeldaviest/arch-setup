@@ -13,6 +13,7 @@ sudo install -Dm644 "$SETUP_ROOT/system/nvidia.conf" /etc/modprobe.d/arch-setup-
 sudo install -Dm644 "$SETUP_ROOT/system/xpadneo.conf" /etc/modules-load.d/xpadneo.conf
 sudo install -Dm644 "$SETUP_ROOT/system/blacklist-xpad.conf" /etc/modprobe.d/blacklist-xpad.conf
 sudo install -Dm644 "$SETUP_ROOT/system/iwd.conf" /etc/iwd/main.conf
+sudo install -Dm644 "$SETUP_ROOT/system/20-wired.network" /etc/systemd/network/20-wired.network
 sudo install -Dm644 "$SETUP_ROOT/system/zram-generator.conf" /etc/systemd/zram-generator.conf
 
 sudo usermod -aG docker,input "$USER"
@@ -24,12 +25,15 @@ sudo ufw allow 53317/udp comment 'LocalSend'
 sudo ufw allow 53317/tcp comment 'LocalSend'
 sudo ufw allow in proto udp from 172.16.0.0/12 to 172.17.0.1 port 53 comment 'Docker DNS'
 sudo ufw allow in proto udp from 192.168.0.0/16 to 172.17.0.1 port 53 comment 'Docker DNS'
+sudo ufw allow in proto tcp from 172.16.0.0/12 to 172.17.0.1 port 53 comment 'Docker DNS'
+sudo ufw allow in proto tcp from 192.168.0.0/16 to 172.17.0.1 port 53 comment 'Docker DNS'
 sudo ufw --force enable
 sudo ufw-docker install
 sudo ufw reload
 
 note "Enabling services"
-sudo systemctl enable systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service
+sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service
+sudo systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 sudo systemctl disable NetworkManager.service 2>/dev/null || true
 sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 

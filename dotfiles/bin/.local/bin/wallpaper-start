@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+wallpaper_dir=${ARCH_SETUP_WALLPAPER_DIR:-$HOME/.config/wallpapers}
+background=${ARCH_SETUP_BACKGROUND:-$wallpaper_dir/current}
+
+[[ $# == 0 || ( $# == 1 && $1 == "--set-only" ) ]] || {
+  printf 'Usage: wallpaper-start [--set-only]\n' >&2
+  exit 2
+}
+
+[[ -d $wallpaper_dir ]] || {
+  printf 'Wallpaper directory does not exist: %s\n' "$wallpaper_dir" >&2
+  exit 1
+}
+
+mapfile -d '' -t selected < <(find "$wallpaper_dir" -maxdepth 1 -type f -print0 | shuf -z -n 1)
+(( ${#selected[@]} == 1 )) || {
+  printf 'No wallpapers found in: %s\n' "$wallpaper_dir" >&2
+  exit 1
+}
+
+mkdir -p "$(dirname "$background")"
+ln -sfnT "${selected[0]}" "$background"
+
+[[ ${1:-} == "--set-only" ]] && exit 0
+exec swaybg -i "$background" -m fill

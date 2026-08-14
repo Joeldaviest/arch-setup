@@ -1,0 +1,4 @@
+# Install virtual-dependency providers before the main AUR transaction.
+# walker-bin depends on "elephant"; installing this binary provider first keeps
+# yay from also selecting and building the conflicting source elephant package.
+elephant-all-bin

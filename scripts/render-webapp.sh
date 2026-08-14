@@ -12,4 +12,6 @@ printf '%s\n' \
   'Type=Application' \
   "Icon=$WEBAPP_ICON" \
   'StartupNotify=true'
-[[ $WEBAPP_NAME == "Gmail" ]] && printf '%s\n' 'MimeType=x-scheme-handler/mailto;'
+if [[ $WEBAPP_NAME == "Gmail" ]]; then
+  printf '%s\n' 'MimeType=x-scheme-handler/mailto;'
+fi

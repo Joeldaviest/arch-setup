@@ -20,4 +20,3 @@ tsl() {
   local pane
   for pane in "${panes[@]}"; do tmux send-keys -t "$pane" "$cmd" C-m; done
 }
-

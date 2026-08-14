@@ -34,7 +34,7 @@ check_host() {
 }
 
 check_repository() {
-  local required=(setup.sh packages/official.txt packages/aur.txt packages/npm.txt scripts/configure-dotfiles.sh scripts/configure-system.sh)
+  local required=(setup.sh packages/official.txt packages/multilib.txt packages/aur-preinstall.txt packages/aur.txt packages/npm.txt scripts/configure-dotfiles.sh scripts/configure-system.sh system/20-wired.network)
   local path
   for path in "${required[@]}"; do
     [[ -f $SETUP_ROOT/$path ]] || die "Missing repository file: $path"
@@ -45,10 +45,12 @@ check_repository() {
   fi
 
   local duplicates
-  duplicates=$(comm -12 \
-    <(read_manifest "$SETUP_ROOT/packages/official.txt" | sort -u) \
-    <(read_manifest "$SETUP_ROOT/packages/aur.txt" | sort -u))
-  [[ -z $duplicates ]] || die "Packages classified as both official and AUR: $duplicates"
+  duplicates=$(cat \
+    <(read_manifest "$SETUP_ROOT/packages/official.txt") \
+    <(read_manifest "$SETUP_ROOT/packages/multilib.txt") \
+    <(read_manifest "$SETUP_ROOT/packages/aur-preinstall.txt") \
+    <(read_manifest "$SETUP_ROOT/packages/aur.txt") | sort | uniq -d)
+  [[ -z $duplicates ]] || die "Packages classified in more than one pacman/AUR manifest: $duplicates"
 
   local script
   while IFS= read -r script; do

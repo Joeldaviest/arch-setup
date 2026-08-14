@@ -50,13 +50,11 @@ for file in monitors.conf input.conf environment.conf autostart.conf; do
   [[ -e $local_dir/$file ]] || touch "$local_dir/$file"
 done
 
-mkdir -p "$HOME/.config/arch-setup"
-ln -sfn "$SETUP_ROOT/assets/wallpapers" "$HOME/.config/arch-setup/wallpapers"
-if [[ ! -e $HOME/.config/arch-setup/background ]]; then
-  default_background=$(find "$SETUP_ROOT/assets/wallpapers" -maxdepth 1 -type f | sort | head -1)
-  [[ -n $default_background ]] || die "No wallpapers found in $SETUP_ROOT/assets/wallpapers"
-  ln -s "$default_background" "$HOME/.config/arch-setup/background"
-fi
+wallpaper_dir="$HOME/.config/wallpapers"
+mkdir -p "$wallpaper_dir"
+rsync -a "$SETUP_ROOT/assets/wallpapers/" "$wallpaper_dir/"
+ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
+  "$SETUP_ROOT/dotfiles/bin/.local/bin/wallpaper-start" --set-only
 
 if [[ -z $(find "$backup_root" -type f -o -type l | head -1) ]]; then
   rmdir -p "$backup_root" 2>/dev/null || true

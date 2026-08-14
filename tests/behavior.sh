@@ -1,0 +1,175 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+test_root=$(mktemp -d)
+trap 'rm -rf -- "$test_root"' EXIT
+
+fail() {
+  printf 'FAIL: %s\n' "$*" >&2
+  exit 1
+}
+
+test_multilib_check_is_deferred_when_disabled() (
+  source "$root/scripts/lib/common.sh"
+  source "$root/scripts/lib/packages.sh"
+  SETUP_ROOT=$root
+
+  command_exists() {
+    [[ $1 == pacman || $1 == pacman-conf ]]
+  }
+  pacman_conf_calls=0
+  pacman-conf() {
+    ((pacman_conf_calls += 1))
+    return 0
+  }
+  pacman() {
+    [[ $1 == -Si ]] || return 1
+    [[ $2 != steam && $2 != lib32-mesa ]] || fail "queried disabled multilib package $2"
+  }
+
+  output=$(check_package_manifests)
+  [[ $output == *'multilib is disabled'* ]] || fail 'missing disabled multilib explanation'
+)
+
+test_multilib_check_runs_when_enabled() (
+  source "$root/scripts/lib/common.sh"
+  source "$root/scripts/lib/packages.sh"
+  SETUP_ROOT=$root
+
+  command_exists() {
+    [[ $1 == pacman || $1 == pacman-conf ]]
+  }
+  pacman-conf() {
+    printf '%s\n' core extra multilib
+  }
+  pacman() {
+    [[ $1 == -Si ]] || return 1
+    [[ $2 != steam ]] || return 7
+  }
+
+  if (check_package_manifests >/dev/null 2>&1); then
+    fail 'accepted an unavailable package from enabled multilib'
+  fi
+)
+
+test_install_includes_multilib_manifest() (
+  source "$root/scripts/lib/common.sh"
+  source "$root/scripts/lib/packages.sh"
+  SETUP_ROOT=$root
+  command_log="$test_root/install-commands"
+
+  command_exists() {
+    [[ $1 == yay ]]
+  }
+  pacman-conf() {
+    printf '%s\n' core extra multilib
+  }
+  sudo() {
+    printf '%s\n' "$*" >>"$command_log"
+  }
+  yay() {
+    printf 'yay %s\n' "$*" >>"$command_log"
+    return 0
+  }
+  mise() {
+    printf 'mise %s\n' "$*" >>"$command_log"
+    return 0
+  }
+
+  install_packages >/dev/null
+  grep -qE '^pacman -Syu .* steam( |$)' "$command_log" || fail 'steam was omitted from the pacman install command'
+  grep -qE '^pacman -Syu .* lib32-mesa( |$)' "$command_log" || fail 'lib32-mesa was omitted from the pacman install command'
+  grep -qE '^pacman -Syu .* umu-launcher( |$)' "$command_log" || fail 'umu-launcher was omitted from the pacman install command'
+
+  provider_line=$(grep -nE '^yay .* elephant-all-bin( |$)' "$command_log" | cut -d: -f1)
+  walker_line=$(grep -nE '^yay .* walker-bin( |$)' "$command_log" | cut -d: -f1)
+  [[ -n $provider_line && -n $walker_line && $provider_line -lt $walker_line ]] || \
+    fail 'Elephant binary provider was not installed before Walker'
+  grep -qE '^mise exec node@lts -- npm install --global --allow-scripts=opencode-ai( |$)' "$command_log" || \
+    fail 'opencode-ai install scripts were not explicitly allowed'
+)
+
+test_wallpaper_start() (
+  test_home="$test_root/wallpaper-home"
+  wallpaper_dir="$test_home/.config/wallpapers"
+  mkdir -p "$wallpaper_dir"
+  printf 'one' >"$wallpaper_dir/one.jpg"
+  printf 'two' >"$wallpaper_dir/two.png"
+
+  HOME=$test_home "$root/dotfiles/bin/.local/bin/wallpaper-start" --set-only
+  selected=$(readlink -f "$wallpaper_dir/current")
+  [[ $selected == "$wallpaper_dir/one.jpg" || $selected == "$wallpaper_dir/two.png" ]] || \
+    fail 'selected a wallpaper outside the local wallpaper directory'
+
+  if HOME=$test_home "$root/dotfiles/bin/.local/bin/wallpaper-start" invalid >/dev/null 2>&1; then
+    fail 'accepted an invalid wallpaper-start argument'
+  fi
+
+  mock_bin="$test_root/wallpaper-bin"
+  mkdir -p "$mock_bin"
+  printf '#!/bin/bash\nprintf "%%s\\n" "$*"\n' >"$mock_bin/swaybg"
+  chmod +x "$mock_bin/swaybg"
+  swaybg_args=$(HOME=$test_home PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/wallpaper-start")
+  [[ $swaybg_args == "-i $wallpaper_dir/current -m fill" ]] || \
+    fail 'wallpaper-start did not launch swaybg with the stable background link'
+
+  empty_home="$test_root/empty-wallpaper-home"
+  mkdir -p "$empty_home/.config/wallpapers"
+  if HOME=$empty_home "$root/dotfiles/bin/.local/bin/wallpaper-start" --set-only >/dev/null 2>&1; then
+    fail 'accepted an empty wallpaper directory'
+  fi
+)
+
+test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts() (
+  test_home="$test_root/configure-home"
+  mock_bin="$test_root/mock-bin"
+  mkdir -p "$test_home" "$mock_bin"
+  printf '# existing zsh configuration\n' >"$test_home/.zshrc"
+
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/stow"
+  chmod +x "$mock_bin/stow"
+
+  HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
+
+  local_wallpapers="$test_home/.config/wallpapers"
+  [[ -d $local_wallpapers ]] || fail 'local wallpaper directory was not created'
+  [[ $(find "$local_wallpapers" -maxdepth 1 -type f | wc -l) == $(find "$root/assets/wallpapers" -maxdepth 1 -type f | wc -l) ]] || \
+    fail 'not all bundled wallpapers were copied'
+  [[ $(readlink -f "$local_wallpapers/current") == "$local_wallpapers/"* ]] || \
+    fail 'background still depends on the repository checkout'
+  find "$test_home/.local/state/arch-setup/backups" -type f -path '*/.zshrc' -exec grep -qF '# existing zsh configuration' {} \; || \
+    fail 'existing dotfile was not backed up'
+
+  printf 'personal' >"$local_wallpapers/personal.jpg"
+  HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
+  [[ -f $local_wallpapers/personal.jpg ]] || fail 'setup removed a locally added wallpaper'
+)
+
+test_webapp_install_creates_every_launcher() (
+  test_home="$test_root/webapp-home"
+  mkdir -p "$test_home"
+
+  HOME=$test_home "$root/scripts/install-webapps.sh" >/dev/null
+
+  app_dir="$test_home/.local/share/applications"
+  for app in WhatsApp 'Google Maps' YouTube GitHub Gmail; do
+    [[ -x $app_dir/$app.desktop ]] || fail "web app launcher was not installed: $app"
+    grep -qF 'Exec=' "$app_dir/$app.desktop" || fail "web app launcher has no command: $app"
+  done
+  grep -qF 'Exec=gmail-handler %u' "$app_dir/Gmail.desktop" || fail 'Gmail handler command is incorrect'
+  grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/Gmail.desktop" || fail 'Gmail mailto association is missing'
+  if grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/WhatsApp.desktop"; then
+    fail 'mailto association leaked into a non-Gmail launcher'
+  fi
+)
+
+test_multilib_check_is_deferred_when_disabled
+test_multilib_check_runs_when_enabled
+test_install_includes_multilib_manifest
+test_wallpaper_start
+test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
+test_webapp_install_creates_every_launcher
+
+echo 'Behavior checks passed'
