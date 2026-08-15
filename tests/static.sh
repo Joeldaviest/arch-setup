@@ -28,8 +28,8 @@ required_helpers=(
   audio-input-mute audio-output-switch desktop-audio desktop-bluetooth desktop-browser
   desktop-editor desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
-  monitor-scale terminal-cwd touchpad-toggle tui-launch waybar-toggle webapp-focus
-  webapp-launch window-pop windows-close-all workspace-layout-toggle xdg-terminal-exec
+  monitor-scale terminal-cwd touchpad-toggle tui-launch webapp-focus
+  webapp-launch window-pop windows-close-all xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do
