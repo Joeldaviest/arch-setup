@@ -3,15 +3,9 @@ alias eff='$EDITOR "$(ff)"'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias c='opencode'
-alias cx='claude --permission-mode bypassPermissions'
+alias c='claude'
 alias d='docker'
 alias t='tmux attach || tmux new -s Work'
-alias mup='MISE_MINIMUM_RELEASE_AGE=0 mise up'
-alias g='git'
-alias gcm='git commit -m'
-alias gcam='git commit -a -m'
-alias gcad='git commit -a --amend'
 
 open() (
   xdg-open "$@" >/dev/null 2>&1 &
