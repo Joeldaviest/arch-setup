@@ -33,6 +33,7 @@
 }
 
 #cpu,
+#memory,
 #battery,
 #pulseaudio,
 #custom-omarchy,
@@ -51,10 +52,6 @@
 
 #network {
   margin-right: 13px;
-}
-
-#custom-expand-icon {
-  margin-right: 18px;
 }
 
 tooltip {
