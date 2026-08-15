@@ -1,6 +1,6 @@
 anchor=top-right
 group-by=app-name,summary,body
-default-timeout=5000
+default-timeout=10000
 width=420
 outer-margin=20
 padding=10,15

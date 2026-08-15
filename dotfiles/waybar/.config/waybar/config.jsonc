@@ -4,7 +4,7 @@
   "position": "top",
   "height": 26,
   "modules-left": ["hyprland/workspaces"],
-  "modules-center": ["clock", "custom/weather", "custom/screenrecording"],
+  "modules-center": ["clock", "custom/weather", "custom/screenrecording", "custom/dnd"],
   "modules-right": ["tray", "bluetooth", "network", "pulseaudio", "cpu", "memory", "battery"],
   "hyprland/workspaces": {
     "on-click": "activate",
@@ -32,6 +32,13 @@
     "return-type": "json",
     "interval": 2,
     "on-click": "desktop-screenrecord --stop-recording"
+  },
+  "custom/dnd": {
+    "exec": "makoctl mode | grep -q do-not-disturb && echo '{\"text\":\"󰂛\",\"class\":\"active\"}' || echo '{\"text\":\"󰂚\",\"class\":\"inactive\"}'",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": false,
+    "on-click": "makoctl mode -t do-not-disturb"
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],

@@ -77,6 +77,15 @@ tooltip {
   padding: 0;
 }
 
+#custom-dnd {
+  margin-left: 7.5px;
+  margin-right: 7.5px;
+}
+
+#custom-dnd.active {
+  color: @accent;
+}
+
 .hidden {
   opacity: 0;
 }
