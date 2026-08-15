@@ -9,7 +9,6 @@ hyprland
 hypridle
 hyprlock
 hyprpicker
-hyprsunset
 uwsm
 waybar
 mako
