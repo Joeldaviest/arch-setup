@@ -5,7 +5,7 @@
   "height": 26,
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["clock", "custom/weather", "custom/screenrecording"],
-  "modules-right": ["group/tray-expander", "bluetooth", "network", "pulseaudio", "cpu", "battery"],
+  "modules-right": ["tray", "bluetooth", "network", "pulseaudio", "cpu", "memory", "battery"],
   "hyprland/workspaces": {
     "on-click": "activate",
     "format": "{icon}",
@@ -16,7 +16,7 @@
     "persistent-workspaces": {"1": [], "2": [], "3": [], "4": [], "5": []}
   },
   "clock": {
-    "format": "{:L%A %H:%M}",
+    "format": "{:L%-I:%M %p %a %d-%m-%y}",
     "format-alt": "{:L%d %B W%V %Y}",
     "tooltip": false
   },
@@ -54,11 +54,7 @@
     "on-click": "desktop-audio", "on-click-right": "pamixer -t", "scroll-step": 5
   },
   "cpu": {"interval": 5, "format": "󰍛", "on-click": "tui-launch btop"},
-  "group/tray-expander": {
-    "orientation": "inherit", "drawer": {"transition-duration": 600, "children-class": "tray-group-item"},
-    "modules": ["custom/expand-icon", "tray"]
-  },
-  "custom/expand-icon": {"format": "", "tooltip": false},
+  "memory": {"interval": 5, "format": "{percentage}%", "on-click": "tui-launch btop"},
   "tray": {"icon-size": 12, "spacing": 17}
 }
 
