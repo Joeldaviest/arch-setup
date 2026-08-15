@@ -99,7 +99,6 @@ mise
 uv
 docker
 docker-compose
-godot
 zram-generator
 fprintd
 libfido2

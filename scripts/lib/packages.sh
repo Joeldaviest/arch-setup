@@ -82,7 +82,7 @@ install_packages() {
   if ((${#npm[@]})); then
     note "Installing npm command-line applications"
     mise use --global node@lts
-    mise exec node@lts -- npm install --global --allow-scripts=opencode-ai "${npm[@]}"
+    mise exec node@lts -- npm install --global "${npm[@]}"
   fi
 }
 
