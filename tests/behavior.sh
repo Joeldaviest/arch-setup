@@ -87,8 +87,6 @@ test_install_includes_multilib_manifest() (
   walker_line=$(grep -nE '^yay .* walker-bin( |$)' "$command_log" | cut -d: -f1)
   [[ -n $provider_line && -n $walker_line && $provider_line -lt $walker_line ]] || \
     fail 'Elephant binary provider was not installed before Walker'
-  grep -qE '^mise exec node@lts -- npm install --global --allow-scripts=opencode-ai( |$)' "$command_log" || \
-    fail 'opencode-ai install scripts were not explicitly allowed'
 )
 
 test_wallpaper_start() (

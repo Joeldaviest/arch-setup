@@ -2,3 +2,5 @@
 steam
 lib32-mesa
 umu-launcher
+lib32-gamemode
+lib32-mangohud

@@ -19,6 +19,5 @@ Notable replacements for the previous environment:
 | Omarchy SwayOSD build | official `swayosd` |
 | VSCodium | AUR `vscodium-bin` |
 | Claude Code | AUR `claude-code` |
-| OpenCode wrapper | upstream npm `opencode-ai` |
 | Omarchy update/channel packages | removed |
 | Limine/Snapper/Plymouth packages | outside repository scope |
