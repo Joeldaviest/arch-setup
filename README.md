@@ -23,6 +23,15 @@ mkinitcpio, Plymouth, Snapper, or hibernation.
 ./setup.sh
 ```
 
+To pull repository changes onto an already-set-up machine and re-apply them:
+
+```bash
+./upgrade.sh
+```
+
+It fetches and fast-forwards the current branch (refusing on local changes or
+a diverged branch), then re-runs `setup.sh`, which is safe to repeat.
+
 Repository tests can be run on a non-Arch development machine:
 
 ```bash

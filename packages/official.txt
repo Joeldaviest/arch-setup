@@ -22,6 +22,10 @@ polkit-gnome
 sddm
 qt5-wayland
 qt6-wayland
+qt5-declarative
+qt5-quickcontrols2
+qt5-graphicaleffects
+qt5-svg
 gtk4-layer-shell
 
 # Audio, input, networking, and hardware
