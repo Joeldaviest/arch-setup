@@ -1,4 +1,22 @@
 #!/bin/bash
-(( $# > 0 )) || { echo "Usage: tui-launch <command> [args...]" >&2; exit 2; }
-exec uwsm-app -- xdg-terminal-exec --app-id="TUI.$(basename "$1")" -e "$@"
+set -euo pipefail
 
+size=""
+if [[ ${1:-} == --size ]]; then
+  size=$2
+  shift 2
+fi
+
+(( $# > 0 )) || { echo "Usage: tui-launch [--size COLSxLINES] <command> [args...]" >&2; exit 2; }
+
+app_id="TUI.$(basename "$1")"
+
+if [[ -n $size ]]; then
+  # Explicit character-grid size: lets Alacritty compute the right pixel size
+  # for the current font/monitor scale, instead of guessing a fixed pixel box.
+  cols=${size%x*}
+  lines=${size#*x}
+  exec uwsm-app -- alacritty --class "$app_id" -o "window.dimensions.columns=$cols" -o "window.dimensions.lines=$lines" -e "$@"
+else
+  exec uwsm-app -- xdg-terminal-exec --app-id="$app_id" -e "$@"
+fi

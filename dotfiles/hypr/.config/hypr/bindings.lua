@@ -28,14 +28,14 @@ hl.bind("SUPER + SHIFT + L", hl.dsp.window.swap({ direction = "right" }), { desc
 hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("desktop-screenshot"), { description = "Screenshot" })
 hl.bind("SUPER + SHIFT + SPACE", hl.dsp.window.float(), { description = "Toggle window floating/tiling" })
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("hyprctl reload"), { description = "Reload Hyprland" })
-hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("uwsm-app -- xdg-terminal-exec --app-id=TUI.power -e desktop-power menu"), { description = "System menu" })
+hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("uwsm-app -- alacritty --class TUI.power -o window.dimensions.columns=50 -o window.dimensions.lines=14 -e desktop-power menu"), { description = "System menu" })
 hl.bind("SUPER + ESCAPE", hl.dsp.exec_cmd("desktop-power lock"), { description = "Lock system" })
 
 -- Standalone desktop utilities
 hl.bind("SUPER + ALT + S", hl.dsp.exec_cmd("desktop-screenrecord"), { description = "Screen recording" })
 hl.bind("SUPER + W", hl.dsp.exec_cmd("wallpaper-select"), { description = "Select wallpaper" })
 hl.bind("SUPER + ALT + R", hl.dsp.exec_cmd("reminder show"), { description = "Show reminders" })
-hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("reminder-set"), { description = "Set reminder" })
+hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("uwsm-app -- alacritty --class TUI.reminder -o window.dimensions.columns=50 -o window.dimensions.lines=8 -e reminder-set"), { description = "Set reminder" })
 hl.bind("SUPER + SHIFT + CTRL + R", hl.dsp.exec_cmd("reminder clear"), { description = "Clear reminders" })
 hl.bind("SUPER + SHIFT + A", hl.dsp.exec_cmd("desktop-audio"), { description = "Audio controls" })
 hl.bind("SUPER + SHIFT + B", hl.dsp.exec_cmd("desktop-bluetooth"), { description = "Bluetooth controls" })

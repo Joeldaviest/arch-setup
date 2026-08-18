@@ -7,15 +7,18 @@ hl.window_rule({
 })
 
 hl.window_rule({
-  match = { class = "TUI\\.(bluetooth|wifi|audio|power|float)|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
+  match = { class = "TUI\\.float|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
   tag = "+floating-window",
 })
 
--- btop needs a taller grid (min 80x30) than the default floating-window size gives
+-- These are terminal-hosted TUIs launched with an explicit character-grid
+-- size (see tui-launch --size and the desktop-* scripts), so the terminal
+-- itself computes the right pixel size for the current font/monitor scale.
+-- Only float + center them here; no `size`, or we'd fight that computation.
 hl.window_rule({
-  match = { class = "^TUI\\.btop$" },
-  tag = "+floating-window",
-  size = "900 820",
+  match = { class = "^TUI\\.(bluetooth|wifi|audio|power|reminder|btop)$" },
+  float = true,
+  center = true,
 })
 
 hl.window_rule({

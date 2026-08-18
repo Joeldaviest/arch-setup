@@ -1,3 +1,2 @@
 #!/bin/bash
-exec uwsm-app -- xdg-terminal-exec --app-id=TUI.wifi -e impala
-
+exec uwsm-app -- alacritty --class TUI.wifi -o window.dimensions.columns=70 -o window.dimensions.lines=24 -e impala

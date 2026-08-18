@@ -1,3 +1,2 @@
 #!/bin/bash
-exec uwsm-app -- xdg-terminal-exec --app-id=TUI.audio -e wiremix
-
+exec uwsm-app -- alacritty --class TUI.audio -o window.dimensions.columns=70 -o window.dimensions.lines=20 -e wiremix
