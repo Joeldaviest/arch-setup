@@ -32,6 +32,12 @@
   opacity: 0.5;
 }
 
+#workspaces button.active {
+  color: @accent;
+  font-weight: bold;
+  opacity: 1;
+}
+
 #cpu,
 #memory,
 #battery,
