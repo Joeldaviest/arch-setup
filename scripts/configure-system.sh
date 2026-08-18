@@ -13,6 +13,12 @@ sudo install -Dm644 "$SETUP_ROOT/system/sddm.conf" /etc/sddm.conf.d/20-arch-setu
 sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.conf" /usr/share/sddm/greeter-hyprland.conf
 sudo rm -rf /usr/share/sddm/themes/omarchy
 sudo cp -r "$SETUP_ROOT/system/sddm-theme/omarchy" /usr/share/sddm/themes/omarchy
+sudo mkdir -p /usr/share/backgrounds/arch-setup
+sudo rsync -a --delete "$SETUP_ROOT/assets/wallpapers/" /usr/share/backgrounds/arch-setup/
+sudo chmod -R a+rX /usr/share/backgrounds/arch-setup
+sudo install -Dm755 "$SETUP_ROOT/system/sddm-random-logo" /usr/local/bin/sddm-random-logo
+sudo install -Dm644 "$SETUP_ROOT/system/sddm-random-logo.conf" /etc/systemd/system/sddm.service.d/10-random-logo.conf
+sudo systemctl daemon-reload
 sudo install -Dm644 "$SETUP_ROOT/system/arch-setup.desktop" /usr/share/wayland-sessions/arch-setup.desktop
 sudo install -Dm644 "$SETUP_ROOT/system/docker-daemon.json" /etc/docker/daemon.json
 sudo install -Dm644 "$SETUP_ROOT/system/docker-resolved.conf" /etc/systemd/resolved.conf.d/20-docker-dns.conf

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Picks a random wallpaper to use as the SDDM greeter logo, run via a
+# systemd drop-in ExecStartPre before every sddm.service start.
+
+set -Eeuo pipefail
+
+wallpaper_dir="/usr/share/backgrounds/arch-setup"
+logo="/usr/share/sddm/themes/omarchy/logo.png"
+
+[[ -d $wallpaper_dir ]] || exit 0
+
+mapfile -d '' -t candidates < <(find "$wallpaper_dir" -maxdepth 1 -type f -print0)
+(( ${#candidates[@]} > 0 )) || exit 0
+
+ln -sfnT "${candidates[RANDOM % ${#candidates[@]}]}" "$logo"
