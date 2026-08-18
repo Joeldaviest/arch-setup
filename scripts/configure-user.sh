@@ -23,7 +23,12 @@ for mime in video/mp4 video/x-msvideo video/x-matroska video/webm video/quicktim
   xdg-mime default mpv.desktop "$mime"
 done
 
-systemctl --user enable --now swayosd-server.service elephant.service 2>/dev/null || true
+systemctl --user enable swayosd-server.service 2>/dev/null || true
+
+# elephant has no packaged systemd unit; its own CLI generates
+# ~/.config/systemd/user/elephant.service on first run.
+elephant service enable
+systemctl --user start elephant.service
 
 if [[ $(getent passwd "$USER" | cut -d: -f7) != "/bin/zsh" ]]; then
   sudo chsh -s /bin/zsh "$USER"

@@ -16,7 +16,7 @@
     "persistent-workspaces": {"1": [], "2": [], "3": [], "4": [], "5": []}
   },
   "clock": {
-    "format": "{:L%-I:%M %p %a %d-%m-%y}",
+    "format": "{:L%I:%M %p %a %d-%m-%y}",
     "format-alt": "{:L%d %B W%V %Y}",
     "tooltip": false
   },
