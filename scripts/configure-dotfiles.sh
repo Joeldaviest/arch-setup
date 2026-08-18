@@ -39,6 +39,18 @@ for package_dir in "$SETUP_ROOT"/dotfiles/*; do
   backup_conflicts "$package"
 done
 
+obsolete_hypr_files=(
+  environment.conf looknfeel.conf input.conf windows.conf media.conf clipboard.conf
+  tiling.conf bindings.conf autostart.conf hyprland.conf apps.conf
+  apps/bitwarden.conf apps/browser.conf apps/hyprshot.conf apps/jetbrains.conf
+  apps/localsend.conf apps/pip.conf apps/steam.conf apps/system.conf
+  apps/telegram.conf apps/terminals.conf apps/walker.conf apps/webcam-overlay.conf
+)
+for file in "${obsolete_hypr_files[@]}"; do
+  path="$HOME/.config/hypr/$file"
+  [[ -L $path ]] && rm -f "$path"
+done
+
 note "Linking dotfiles with Stow"
 for package_dir in "$SETUP_ROOT"/dotfiles/*; do
   stow --no-folding --restow --dir="$SETUP_ROOT/dotfiles" --target="$HOME" "$(basename "$package_dir")"
@@ -62,4 +74,11 @@ ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
 
 if [[ -z $(find "$backup_root" -type f -o -type l | head -1) ]]; then
   rmdir -p "$backup_root" 2>/dev/null || true
+fi
+
+if pgrep -x waybar >/dev/null 2>&1; then
+  note "Restarting waybar to apply config changes"
+  pkill -x waybar
+  setsid uwsm-app -- waybar >/dev/null 2>&1 &
+  disown
 fi
