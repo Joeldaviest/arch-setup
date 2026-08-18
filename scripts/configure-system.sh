@@ -14,12 +14,12 @@ sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.lua" /usr/sh
 sudo rm -f /usr/share/sddm/greeter-hyprland.conf
 sudo rm -rf /usr/share/sddm/themes/omarchy
 sudo cp -r "$SETUP_ROOT/system/sddm-theme/omarchy" /usr/share/sddm/themes/omarchy
-sudo mkdir -p /usr/share/backgrounds/arch-setup
-sudo rsync -a --delete "$SETUP_ROOT/assets/wallpapers/" /usr/share/backgrounds/arch-setup/
-sudo chmod -R a+rX /usr/share/backgrounds/arch-setup
-sudo install -Dm755 "$SETUP_ROOT/system/sddm-random-logo" /usr/local/bin/sddm-random-logo
-sudo install -Dm755 "$SETUP_ROOT/system/sddm-greeter-start" /usr/local/bin/sddm-greeter-start
+sudo install -Dm644 "$SETUP_ROOT/assets/wallpapers/wallhaven-6d1v5q.jpg" /usr/share/sddm/themes/omarchy/logo.jpg
+sudo rm -f /usr/share/sddm/themes/omarchy/logo.png
+sudo rm -f /usr/local/bin/sddm-random-logo /usr/local/bin/sddm-greeter-start
 sudo rm -f /etc/systemd/system/sddm.service.d/10-random-logo.conf
+sudo rmdir /etc/systemd/system/sddm.service.d 2>/dev/null || true
+sudo rm -rf /usr/share/backgrounds/arch-setup
 sudo systemctl daemon-reload
 sudo install -Dm644 "$SETUP_ROOT/system/arch-setup.desktop" /usr/share/wayland-sessions/arch-setup.desktop
 sudo install -Dm644 "$SETUP_ROOT/system/docker-daemon.json" /etc/docker/daemon.json

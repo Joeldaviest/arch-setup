@@ -33,7 +33,7 @@ Rectangle {
   Image {
     id: background
     anchors.fill: parent
-    source: "logo.png"
+    source: "logo.jpg"
     fillMode: Image.PreserveAspectCrop
     asynchronous: true
   }
