@@ -93,6 +93,8 @@ jq
 less
 man-db
 unzip
+7zip
+unrar
 whois
 socat
 zoxide
@@ -150,6 +152,7 @@ shared-mime-info
 gnome-keyring
 gnome-themes-extra
 kvantum-qt5
+kvantum
 libsecret
 libyaml
 python-gobject

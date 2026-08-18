@@ -7,8 +7,6 @@ localsend-bin
 claude-code
 ufw-docker
 xpadneo-dkms
-python-terminaltexteffects
-tzupdate
 ttf-ia-writer
 yaru-icon-theme
 protonplus
