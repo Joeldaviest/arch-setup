@@ -59,8 +59,8 @@
     "format": "{icon}", "format-muted": "", "format-icons": {"headphone": "", "default": ["", "", ""]},
     "on-click": "desktop-audio", "on-click-right": "pamixer -t", "scroll-step": 5
   },
-  "cpu": {"interval": 5, "format": "󰍛", "on-click": "tui-launch --size 90x32 btop"},
-  "memory": {"interval": 5, "format": "{percentage}%", "on-click": "tui-launch --size 90x32 btop"},
+  "cpu": {"interval": 5, "format": "󰍛", "on-click": "tui-launch --size 90x32 --font-size 9 btop"},
+  "memory": {"interval": 5, "format": "{percentage}%", "on-click": "tui-launch --size 90x32 --font-size 9 btop"},
   "tray": {"icon-size": 12, "spacing": 17}
 }
 

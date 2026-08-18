@@ -2,21 +2,31 @@
 set -euo pipefail
 
 size=""
-if [[ ${1:-} == --size ]]; then
-  size=$2
-  shift 2
-fi
+font_size=""
+while true; do
+  case ${1:-} in
+    --size) size=$2; shift 2 ;;
+    --font-size) font_size=$2; shift 2 ;;
+    *) break ;;
+  esac
+done
 
-(( $# > 0 )) || { echo "Usage: tui-launch [--size COLSxLINES] <command> [args...]" >&2; exit 2; }
+(( $# > 0 )) || { echo "Usage: tui-launch [--size COLSxLINES] [--font-size N] <command> [args...]" >&2; exit 2; }
 
 app_id="TUI.$(basename "$1")"
 
 if [[ -n $size ]]; then
   # Explicit character-grid size: lets Alacritty compute the right pixel size
   # for the current font/monitor scale, instead of guessing a fixed pixel box.
+  # On small/low-res screens the requested grid may not physically fit at the
+  # default font size and gets silently shrunk back down; --font-size lets a
+  # caller with a hard minimum grid (e.g. btop) shrink the font instead, so
+  # the grid it actually needs always fits regardless of screen size.
   cols=${size%x*}
   lines=${size#*x}
-  exec uwsm-app -- alacritty --class "$app_id" -o "window.dimensions.columns=$cols" -o "window.dimensions.lines=$lines" -e "$@"
+  opts=(-o "window.dimensions.columns=$cols" -o "window.dimensions.lines=$lines")
+  [[ -n $font_size ]] && opts+=(-o "font.size=$font_size")
+  exec uwsm-app -- alacritty --class "$app_id" "${opts[@]}" -e "$@"
 else
   exec uwsm-app -- xdg-terminal-exec --app-id="$app_id" -e "$@"
 fi
