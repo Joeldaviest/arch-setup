@@ -46,7 +46,7 @@ done
 
 local_dir="$HOME/.config/hypr/local"
 mkdir -p "$local_dir"
-for file in monitors.conf input.conf environment.conf autostart.conf; do
+for file in monitors.lua input.lua environment.lua autostart.lua; do
   [[ -e $local_dir/$file ]] || touch "$local_dir/$file"
 done
 

@@ -87,7 +87,7 @@ hardware_case 'VGA compatible controller: NVIDIA Corporation GTX 1080' Generic n
 hardware_case 'Ethernet controller [1f0a:6801] YT6801' Generic yt6801-dkms
 hardware_case 'VGA compatible controller: AMD/ATI Radeon' Framework qmk-hid
 
-grep -qF 'exec-once = uwsm-app -- wallpaper-start' "$root/dotfiles/hypr/.config/hypr/autostart.conf"
+grep -qF 'hl.exec_cmd("uwsm-app -- wallpaper-start")' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
 if grep -RqsF "$root/assets/wallpapers" "$root/dotfiles"; then
   echo 'Runtime wallpaper configuration depends on the repository path' >&2
   exit 1

@@ -73,7 +73,7 @@ sudo docker run --rm alpine:latest nslookup archlinux.org >/dev/null || fail 'Do
 
 [[ -f /usr/share/wayland-sessions/arch-setup.desktop ]] || fail 'Hyprland session entry is missing'
 [[ -L $HOME/.zshrc ]] || fail '.zshrc is not managed by Stow'
-[[ -L $HOME/.config/hypr/hyprland.conf ]] || fail 'Hyprland configuration is not managed by Stow'
+[[ -L $HOME/.config/hypr/hyprland.lua ]] || fail 'Hyprland configuration is not managed by Stow'
 
 application_dir="$HOME/.local/share/applications"
 for app in WhatsApp 'Google Maps' YouTube GitHub Gmail; do

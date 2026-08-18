@@ -72,14 +72,15 @@ Conflicting files are backed up below:
 Machine-specific Hyprland settings live outside Git:
 
 ```text
-~/.config/hypr/local/monitors.conf
-~/.config/hypr/local/input.conf
-~/.config/hypr/local/environment.conf
-~/.config/hypr/local/autostart.conf
+~/.config/hypr/local/monitors.lua
+~/.config/hypr/local/input.lua
+~/.config/hypr/local/environment.lua
+~/.config/hypr/local/autostart.lua
 ```
 
 The tracked defaults work on a generic display. Use `nwg-displays` to generate
-monitor rules or edit `local/monitors.conf` directly.
+monitor rules or edit `local/monitors.lua` directly (e.g. `hl.monitor({ output
+= "eDP-1", position = "0x0" })`).
 
 ## Package policy
 
