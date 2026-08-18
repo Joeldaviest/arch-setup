@@ -1,17 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-selection=$(hyprctl binds -j | jq -r '
-    def hasbit(n): ((. / n) | floor) % 2 == 1;
-    .[]
-    | select(.description != "")
-    | ( [
-          (if (.modmask | hasbit(64)) then "SUPER" else empty end),
-          (if (.modmask | hasbit(4)) then "CTRL" else empty end),
-          (if (.modmask | hasbit(8)) then "ALT" else empty end),
-          (if (.modmask | hasbit(1)) then "SHIFT" else empty end)
-        ] | join(" + ") ) as $mods
-    | ((.key // "") as $k | if $k == "" then "code:\(.keycode)" else $k end) as $key
-    | (if $mods == "" then $key else "\($mods) + \($key)" end) + "  →  " + .description
-  ' | sort -u | walker --dmenu -p 'Keybindings' --width 800) || exit 0
+files=(
+  "$HOME/.config/hypr/media.lua"
+  "$HOME/.config/hypr/clipboard.lua"
+  "$HOME/.config/hypr/tiling.lua"
+  "$HOME/.config/hypr/bindings.lua"
+)
+selection=$(sed -n 's/.*hl\.bind("\([^"]*\)".*description = "\([^"]*\)".*/\1  →  \2/p' "${files[@]}" |
+  sed -e 's/code:10/1/' -e 's/code:11/2/' -e 's/code:12/3/' -e 's/code:13/4/' -e 's/code:14/5/' \
+      -e 's/code:15/6/' -e 's/code:16/7/' -e 's/code:17/8/' -e 's/code:18/9/' -e 's/code:19/0/' |
+  sort -u | walker --dmenu -p 'Keybindings' --width 800) || exit 0
 notify-send 'Keybinding' "$selection"
