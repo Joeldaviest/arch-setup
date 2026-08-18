@@ -7,8 +7,7 @@ location=""
 [[ -s $location_file ]] && location=$(<"$location_file")
 location=${location// /+}
 
-weather=$(curl -fsS --max-time 5 "https://wttr.in/${location}?format=%l:+%c+%t+%C" 2>/dev/null) || weather='Weather unavailable'
-weather=$(sed -E 's/,[^:]*:/:/' <<<"$weather")
+weather=$(curl -fsS --max-time 5 "https://wttr.in/${location}?format=%c+%t+%C" 2>/dev/null) || weather='Weather unavailable'
 if [[ $format == "--json" ]]; then
   jq -cn --arg text "$weather" '{text:$text,tooltip:$text}'
 else

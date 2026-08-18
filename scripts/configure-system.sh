@@ -10,14 +10,16 @@ sudo locale-gen
 
 note "Installing system configuration"
 sudo install -Dm644 "$SETUP_ROOT/system/sddm.conf" /etc/sddm.conf.d/20-arch-setup.conf
-sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.conf" /usr/share/sddm/greeter-hyprland.conf
+sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.lua" /usr/share/sddm/greeter-hyprland.lua
+sudo rm -f /usr/share/sddm/greeter-hyprland.conf
 sudo rm -rf /usr/share/sddm/themes/omarchy
 sudo cp -r "$SETUP_ROOT/system/sddm-theme/omarchy" /usr/share/sddm/themes/omarchy
 sudo mkdir -p /usr/share/backgrounds/arch-setup
 sudo rsync -a --delete "$SETUP_ROOT/assets/wallpapers/" /usr/share/backgrounds/arch-setup/
 sudo chmod -R a+rX /usr/share/backgrounds/arch-setup
 sudo install -Dm755 "$SETUP_ROOT/system/sddm-random-logo" /usr/local/bin/sddm-random-logo
-sudo install -Dm644 "$SETUP_ROOT/system/sddm-random-logo.conf" /etc/systemd/system/sddm.service.d/10-random-logo.conf
+sudo install -Dm755 "$SETUP_ROOT/system/sddm-greeter-start" /usr/local/bin/sddm-greeter-start
+sudo rm -f /etc/systemd/system/sddm.service.d/10-random-logo.conf
 sudo systemctl daemon-reload
 sudo install -Dm644 "$SETUP_ROOT/system/arch-setup.desktop" /usr/share/wayland-sessions/arch-setup.desktop
 sudo install -Dm644 "$SETUP_ROOT/system/docker-daemon.json" /etc/docker/daemon.json

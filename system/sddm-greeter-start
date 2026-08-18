@@ -1,0 +1,8 @@
+#!/bin/bash
+# Wraps the SDDM greeter's compositor launch so the random logo/wallpaper
+# picks fresh every time the greeter appears (boot AND every logout), not
+# just once per sddm.service start.
+set -Eeuo pipefail
+
+/usr/local/bin/sddm-random-logo || true
+exec start-hyprland -- --config /usr/share/sddm/greeter-hyprland.lua
