@@ -82,6 +82,11 @@ The tracked defaults work on a generic display. Use `nwg-displays` to generate
 monitor rules or edit `local/monitors.lua` directly (e.g. `hl.monitor({ output
 = "eDP-1", position = "0x0" })`).
 
+The waybar weather module (`weather-status`) auto-detects location by IP via
+wttr.in. To pin it to a specific city, write the city name to
+`~/.config/weather-status/location` (e.g. `echo "London" >
+~/.config/weather-status/location`).
+
 ## Package policy
 
 `packages/official.txt` is installed with pacman. `packages/multilib.txt`

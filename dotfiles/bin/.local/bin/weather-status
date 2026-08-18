@@ -1,10 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 format=${1:-text}
-weather=$(curl -fsS --max-time 5 'https://wttr.in/?format=%c+%t+%C' 2>/dev/null || printf 'Weather unavailable')
+
+location_file="$HOME/.config/weather-status/location"
+location=""
+[[ -s $location_file ]] && location=$(<"$location_file")
+location=${location// /+}
+
+weather=$(curl -fsS --max-time 5 "https://wttr.in/${location}?format=%l:+%c+%t+%C" 2>/dev/null || printf 'Weather unavailable')
 if [[ $format == "--json" ]]; then
   jq -cn --arg text "$weather" '{text:$text,tooltip:$text}'
 else
   printf '%s\n' "$weather"
 fi
-

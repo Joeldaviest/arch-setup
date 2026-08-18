@@ -3,7 +3,7 @@ hl.window_rule({
   match = { tag = "floating-window" },
   float = true,
   center = true,
-  size = "875 600",
+  size = "45% 55%",
 })
 
 hl.window_rule({
@@ -15,7 +15,7 @@ hl.window_rule({
 hl.window_rule({
   match = { class = "^TUI\\.btop$" },
   tag = "+floating-window",
-  size = "900 660",
+  size = "900 820",
 })
 
 hl.window_rule({

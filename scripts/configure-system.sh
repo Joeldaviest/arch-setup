@@ -3,6 +3,11 @@
 set -Eeuo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/scripts/lib/common.sh"
 
+note "Configuring locale"
+sudo sed -i '/^#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
+sudo locale-gen
+[[ -f /etc/locale.conf ]] || printf 'LANG=en_US.UTF-8\n' | sudo tee /etc/locale.conf >/dev/null
+
 note "Installing system configuration"
 sudo install -Dm644 "$SETUP_ROOT/system/sddm.conf" /etc/sddm.conf.d/20-arch-setup.conf
 sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.conf" /usr/share/sddm/greeter-hyprland.conf

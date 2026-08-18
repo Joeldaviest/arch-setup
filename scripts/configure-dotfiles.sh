@@ -50,6 +50,10 @@ for file in monitors.lua input.lua environment.lua autostart.lua; do
   [[ -e $local_dir/$file ]] || touch "$local_dir/$file"
 done
 
+weather_dir="$HOME/.config/weather-status"
+mkdir -p "$weather_dir"
+[[ -e $weather_dir/location ]] || touch "$weather_dir/location"
+
 wallpaper_dir="$HOME/.config/wallpapers"
 mkdir -p "$wallpaper_dir"
 rsync -a "$SETUP_ROOT/assets/wallpapers/" "$wallpaper_dir/"
