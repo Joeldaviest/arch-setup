@@ -28,7 +28,7 @@ hl.bind("SUPER + SHIFT + L", hl.dsp.window.swap({ direction = "right" }), { desc
 hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("desktop-screenshot"), { description = "Screenshot" })
 hl.bind("SUPER + SHIFT + SPACE", hl.dsp.window.float(), { description = "Toggle window floating/tiling" })
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("hyprctl reload"), { description = "Reload Hyprland" })
-hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("desktop-power menu"), { description = "System menu" })
+hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd("uwsm-app -- xdg-terminal-exec --app-id=TUI.power -e desktop-power menu"), { description = "System menu" })
 hl.bind("SUPER + ESCAPE", hl.dsp.exec_cmd("desktop-power lock"), { description = "Lock system" })
 
 -- Standalone desktop utilities

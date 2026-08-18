@@ -7,7 +7,7 @@ hl.window_rule({
 })
 
 hl.window_rule({
-  match = { class = "TUI\\.(bluetooth|wifi|audio|float)|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
+  match = { class = "TUI\\.(bluetooth|wifi|audio|power|float)|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
   tag = "+floating-window",
 })
 
