@@ -30,18 +30,23 @@ Rectangle {
     }
   }
 
+  Image {
+    id: background
+    anchors.fill: parent
+    source: "logo.png"
+    fillMode: Image.PreserveAspectCrop
+    asynchronous: true
+  }
+
+  Rectangle {
+    anchors.fill: parent
+    color: "#000000"
+    opacity: 0.35
+  }
+
   Column {
     anchors.centerIn: parent
     spacing: 40
-
-    Image {
-      id: logo
-      source: "logo.png"
-      width: Math.min(sourceSize.width, root.width * 0.8)
-      height: sourceSize.width > 0 ? Math.round(width * sourceSize.height / sourceSize.width) : 0
-      fillMode: Image.PreserveAspectFit
-      anchors.horizontalCenter: parent.horizontalCenter
-    }
 
     Row {
       anchors.horizontalCenter: parent.horizontalCenter
