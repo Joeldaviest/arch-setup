@@ -51,6 +51,7 @@ upower
 libinput
 v4l-utils
 bolt
+fwupd
 
 # Capture and media
 grim

@@ -163,11 +163,35 @@ test_webapp_install_creates_every_launcher() (
   fi
 )
 
+test_desktop_firmware_check_refreshes_then_lists_updates() (
+  mock_bin="$test_root/firmware-bin"
+  command_log="$test_root/firmware-commands"
+  mkdir -p "$mock_bin"
+  cat >"$mock_bin/fwupdmgr" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$FIRMWARE_LOG"
+exit 0
+EOF
+  chmod +x "$mock_bin/fwupdmgr"
+
+  FIRMWARE_LOG=$command_log PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/desktop-firmware" check
+  [[ $(sed -n '1p' "$command_log") == 'refresh --force' ]] || fail 'desktop-firmware check did not refresh first'
+  [[ $(sed -n '2p' "$command_log") == 'get-updates' ]] || fail 'desktop-firmware check did not list updates'
+)
+
+test_desktop_firmware_rejects_unknown_action() (
+  if "$root/dotfiles/bin/.local/bin/desktop-firmware" bogus >/dev/null 2>&1; then
+    fail 'desktop-firmware accepted an unknown action'
+  fi
+)
+
 test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
 test_wallpaper_start
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_webapp_install_creates_every_launcher
+test_desktop_firmware_check_refreshes_then_lists_updates
+test_desktop_firmware_rejects_unknown_action
 
 echo 'Behavior checks passed'

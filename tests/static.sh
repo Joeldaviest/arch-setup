@@ -26,7 +26,7 @@ fi
 
 required_helpers=(
   audio-input-mute audio-output-switch desktop-audio desktop-bluetooth desktop-browser
-  desktop-editor desktop-launcher desktop-osd desktop-power desktop-screenrecord
+  desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch webapp-focus
   webapp-launch window-pop windows-close-all xdg-terminal-exec
@@ -58,6 +58,7 @@ grep -qF 'RequiredForOnline=no' "$root/system/20-wired.network"
 [[ $(grep -cF 'RouteMetric=100' "$root/system/20-wired.network") == 3 ]]
 grep -qF 'systemd-networkd.service' "$root/scripts/configure-system.sh"
 grep -qF 'disable systemd-networkd-wait-online.service' "$root/scripts/configure-system.sh"
+grep -qF 'fwupd-refresh.timer' "$root/scripts/configure-system.sh"
 if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
   echo 'systemd-networkd configuration must not claim Wi-Fi interfaces managed by IWD' >&2
   exit 1

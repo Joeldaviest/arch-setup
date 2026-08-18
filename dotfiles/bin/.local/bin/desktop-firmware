@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+# If fwupdmgr can't find the EFI System Partition, set EspLocation= in
+# /etc/fwupd/uefi_capsule.conf rather than staging the EFI binary manually.
+
+action=${1:-check}
+
+case $action in
+  check)
+    fwupdmgr refresh --force || true
+    fwupdmgr get-updates
+    ;;
+  devices)
+    fwupdmgr get-devices
+    ;;
+  update)
+    fwupdmgr refresh --force || true
+    fwupdmgr get-updates || true
+    echo 'This will flash device firmware and may require a reboot.'
+    printf 'Type yes to continue: '
+    read -r confirmation
+    [[ $confirmation == "yes" ]] || { echo 'Cancelled'; exit 1; }
+    sudo fwupdmgr update
+    ;;
+  *) echo "Usage: desktop-firmware [check|devices|update]" >&2; exit 2 ;;
+esac

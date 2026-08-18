@@ -82,6 +82,11 @@ The tracked defaults work on a generic display. Use `nwg-displays` to generate
 monitor rules or edit `local/monitors.lua` directly (e.g. `hl.monitor({ output
 = "eDP-1", position = "0x0" })`).
 
+Firmware updates use `fwupd`; `fwupd-refresh.timer` keeps LVFS metadata current
+in the background. Run `desktop-firmware check` to list pending updates or
+`desktop-firmware update` to apply them, or pick Firmware from the power menu
+(`SUPER+SHIFT+E`).
+
 The waybar weather module (`weather-status`) auto-detects location by IP via
 wttr.in. To pin it to a specific city, write the city name to
 `~/.config/weather-status/location` (e.g. `echo "London" >

@@ -8,7 +8,7 @@ close_windows() {
 
 action=${1:-menu}
 if [[ $action == "menu" ]]; then
-  action=$(printf '%s\n' Lock Suspend Logout Reboot Shutdown | gum choose --header 'Power') || exit 0
+  action=$(printf '%s\n' Lock Suspend Logout Reboot Shutdown Firmware | gum choose --header 'Power') || exit 0
   action=${action,,}
 fi
 
@@ -26,6 +26,7 @@ case $action in
   logout) close_windows; uwsm stop ;;
   reboot) close_windows; systemctl reboot ;;
   shutdown|poweroff) close_windows; systemctl poweroff ;;
-  *) echo "Usage: desktop-power [menu|lock|wake|suspend|logout|reboot|shutdown]" >&2; exit 2 ;;
+  firmware) exec tui-launch --size 100x30 desktop-firmware update ;;
+  *) echo "Usage: desktop-power [menu|lock|wake|suspend|logout|reboot|shutdown|firmware]" >&2; exit 2 ;;
 esac
 

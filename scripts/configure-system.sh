@@ -48,7 +48,7 @@ sudo ufw-docker install
 sudo ufw reload
 
 note "Enabling services"
-sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service
+sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service fwupd-refresh.timer
 sudo systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 sudo systemctl disable NetworkManager.service 2>/dev/null || true
 sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
