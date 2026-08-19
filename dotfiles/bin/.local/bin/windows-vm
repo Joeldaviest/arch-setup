@@ -1,0 +1,345 @@
+#!/bin/bash
+set -euo pipefail
+
+CONFIG_DIR="$HOME/.config/windows-vm"
+ENV_FILE="$CONFIG_DIR/vm.env"
+USB_FILE="$CONFIG_DIR/usb-devices"
+COMPOSE_FILE="$CONFIG_DIR/docker-compose.yml"
+KRB5_FILE="$CONFIG_DIR/krb5.conf"
+INSTALLED_MARKER="$CONFIG_DIR/.installed"
+DESKTOP_FILE="$HOME/.local/share/applications/Windows.desktop"
+CONTAINER_NAME="windows-vm"
+
+die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+
+require_bin() {
+  local bin
+  for bin in "$@"; do
+    command -v "$bin" >/dev/null 2>&1 || die "$bin is required but not installed"
+  done
+}
+
+load_env() {
+  [[ -f $ENV_FILE ]] || die "Windows VM is not configured. Run: windows-vm install"
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+}
+
+usb_arguments() {
+  local vid pid desc
+  [[ -f $USB_FILE ]] || return 0
+  while IFS=' ' read -r vidpid desc; do
+    [[ -n $vidpid ]] || continue
+    vid=${vidpid%:*}
+    pid=${vidpid#*:}
+    printf ' -device usb-host,vendorid=0x%s,productid=0x%s' "$vid" "$pid"
+  done <"$USB_FILE"
+}
+
+render() {
+  load_env
+  mkdir -p "$CONFIG_DIR"
+
+  local devices_block="      - /dev/kvm
+      - /dev/net/tun"
+  local usb_args=""
+  if [[ -s $USB_FILE ]]; then
+    usb_args=$(usb_arguments)
+    devices_block+="
+      - /dev/bus/usb"
+  fi
+
+  {
+    printf 'services:\n'
+    printf '  windows:\n'
+    printf '    image: dockurr/windows\n'
+    printf '    container_name: %s\n' "$CONTAINER_NAME"
+    printf '    environment:\n'
+    printf '      VERSION: "10-ltsc"\n'
+    printf '      RAM_SIZE: "%s"\n' "$RAM_SIZE"
+    printf '      CPU_CORES: "%s"\n' "$CPU_CORES"
+    printf '      DISK_SIZE: "%s"\n' "$DISK_SIZE"
+    printf '      USERNAME: "%s"\n' "$USERNAME"
+    printf '      PASSWORD: "%s"\n' "$PASSWORD"
+    printf '      TZ: "%s"\n' "$(timedatectl show -p Timezone --value 2>/dev/null || echo UTC)"
+    printf '      ARGUMENTS: "-rtc base=localtime,clock=host,driftfix=slew%s"\n' "$usb_args"
+    printf '    devices:\n%s\n' "$devices_block"
+    printf '    cap_add: [NET_ADMIN]\n'
+    printf '    ports:\n'
+    printf '      - 127.0.0.1:8006:8006\n'
+    printf '      - 127.0.0.1:3389:3389/tcp\n'
+    printf '      - 127.0.0.1:3389:3389/udp\n'
+    printf '    volumes:\n'
+    printf '      - %s/.windows:/storage\n' "$HOME"
+    printf '      - %s/Windows:/shared\n' "$HOME"
+    printf '    restart: "no"\n'
+    printf '    stop_grace_period: 2m\n'
+  } >"$COMPOSE_FILE"
+  chmod 0600 "$COMPOSE_FILE"
+}
+
+install_launcher() {
+  local app_dir="$HOME/.local/share/applications"
+  mkdir -p "$app_dir"
+  {
+    printf '%s\n' '[Desktop Entry]'
+    printf '%s\n' 'Version=1.0'
+    printf '%s\n' 'Name=Windows'
+    printf '%s\n' 'Comment=Start the Windows VM and connect over RDP'
+    printf '%s\n' 'Exec=uwsm-app -- windows-vm launch'
+    printf '%s\n' 'Terminal=false'
+    printf '%s\n' 'Type=Application'
+    printf '%s\n' 'Icon=windows-vm'
+    printf '%s\n' 'Categories=System;Virtualization;'
+    printf '%s\n' 'StartupNotify=true'
+  } >"$DESKTOP_FILE"
+  chmod 0755 "$DESKTOP_FILE"
+  command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$app_dir" || true
+}
+
+preflight() {
+  [[ -e /dev/kvm ]] || die "/dev/kvm is unavailable; enable virtualization in BIOS and load kvm-intel or kvm-amd"
+  require_bin docker docker-compose gum jq lsusb xfreerdp3
+  docker info >/dev/null 2>&1 || die "Docker is unreachable; is the daemon running and are you in the docker group?"
+}
+
+cmd_install() {
+  preflight
+  trap 'echo; echo "Installation cancelled"; exit 1' INT
+
+  mkdir -p "$CONFIG_DIR" "$HOME/.windows" "$HOME/Windows"
+
+  local total_ram total_cores
+  total_ram=$(awk '/MemTotal/ {printf "%d", $2/1024/1024}' /proc/meminfo)
+  total_cores=$(nproc)
+
+  local ram_options=()
+  local size
+  for size in 2 4 8 16 32 64; do
+    ((size <= total_ram)) && ram_options+=("${size}G")
+  done
+  local ram
+  ram=$(printf '%s\n' "${ram_options[@]}" | gum choose --selected=4G --header "RAM to allocate") || die "Installation cancelled"
+
+  local cores
+  cores=$(gum input --placeholder "1-$total_cores" --value 2 --header "CPU cores to allocate") || die "Installation cancelled"
+  [[ $cores =~ ^[0-9]+$ ]] && ((cores >= 1 && cores <= total_cores)) || die "Invalid core count: $cores"
+
+  local available disk_options=()
+  available=$(df "$HOME" | awk 'NR==2 {print int($4/1024/1024)}')
+  for size in 32 64 128 256 512; do
+    ((size + 10 <= available)) && disk_options+=("${size}G")
+  done
+  ((${#disk_options[@]})) || die "Insufficient disk space in \$HOME (available: ${available}G)"
+  local disk
+  disk=$(printf '%s\n' "${disk_options[@]}" | gum choose --selected=64G --header "Disk space for the VM (64G+ recommended)") || die "Installation cancelled"
+
+  local win_user win_pass
+  win_user=$(gum input --placeholder docker --header "Windows username (blank = docker)") || die "Installation cancelled"
+  win_user=${win_user:-docker}
+  win_pass=$(gum input --password --placeholder admin --header "Windows password (blank = admin)") || die "Installation cancelled"
+  win_pass=${win_pass:-admin}
+
+  gum style --border normal --padding "1 2" --margin 1 --bold \
+    "Windows VM Configuration" "" \
+    "RAM:   $ram" "CPU:   $cores cores" "Disk:  $disk" "User:  $win_user"
+  gum confirm "Proceed with this configuration?" || die "Installation cancelled"
+
+  {
+    printf 'RAM_SIZE=%s\n' "$ram"
+    printf 'CPU_CORES=%s\n' "$cores"
+    printf 'DISK_SIZE=%s\n' "$disk"
+    printf 'USERNAME=%s\n' "$win_user"
+    printf 'PASSWORD=%s\n' "$win_pass"
+  } >"$ENV_FILE"
+  chmod 0600 "$ENV_FILE"
+
+  render
+  install_launcher
+
+  echo "Starting Windows VM (this can take 10-15 minutes to download)..."
+  docker-compose -f "$COMPOSE_FILE" up -d
+  echo "Monitor installation progress at: http://127.0.0.1:8006"
+  command -v xdg-open >/dev/null 2>&1 && (sleep 3 && xdg-open http://127.0.0.1:8006 &) || true
+  echo "Once finished, launch with: windows-vm launch"
+}
+
+container_status() {
+  docker inspect --format '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || true
+}
+
+windows_started() {
+  local started_at
+  started_at=$(docker inspect --format '{{.State.StartedAt}}' "$CONTAINER_NAME" 2>/dev/null) || return 1
+  [[ -n $started_at ]] || return 1
+  docker logs --since "$started_at" "$CONTAINER_NAME" 2>&1 | grep -qi "windows started successfully"
+}
+
+cmd_launch() {
+  load_env
+  [[ -f $COMPOSE_FILE ]] || die "Windows VM is not configured. Run: windows-vm install"
+  require_bin docker docker-compose xfreerdp3
+
+  local keep_alive=false
+  case ${1:-} in
+    -k | --keep-alive) keep_alive=true ;;
+  esac
+
+  if [[ $(container_status) != running ]]; then
+    echo "Starting Windows VM..."
+    docker-compose -f "$COMPOSE_FILE" up -d
+  fi
+
+  echo "Waiting for Windows VM to start..."
+  local wait_count=0
+  until windows_started; do
+    sleep 2
+    wait_count=$((wait_count + 1))
+    ((wait_count <= 60)) || die "Timeout waiting for the Windows VM to start (check: docker logs $CONTAINER_NAME)"
+  done
+  : >"$INSTALLED_MARKER"
+
+  # krb5 ships /etc/krb5.conf with default_realm = ATHENA.MIT.EDU. FreeRDP 3
+  # tries Kerberos before NTLM for NLA, so off-network each connect blocks
+  # ~23s looking for MIT's KDC before falling through. The VM only has a
+  # local account, so skip Kerberos entirely with a realm-less config.
+  if [[ ! -f $KRB5_FILE ]]; then
+    printf '[libdefaults]\n  dns_lookup_kdc = false\n  dns_lookup_realm = false\n' >"$KRB5_FILE"
+  fi
+  export KRB5_CONFIG="$KRB5_FILE"
+
+  local rdp_scale=""
+  if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+    local scale_percent
+    scale_percent=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .scale' | awk '{print int($1 * 100)}')
+    if ((scale_percent >= 170)); then
+      rdp_scale="/scale:180"
+    elif ((scale_percent >= 130)); then
+      rdp_scale="/scale:140"
+    fi
+  fi
+
+  xfreerdp3 /u:"$USERNAME" /p:"$PASSWORD" /v:127.0.0.1:3389 -grab-keyboard /sound /microphone \
+    /clipboard /cert:ignore /title:"Windows VM" /dynamic-resolution /gfx:AVC444 \
+    /floatbar:sticky:off,default:visible,show:fullscreen ${rdp_scale:+"$rdp_scale"}
+
+  if [[ $keep_alive == false ]]; then
+    echo "RDP session closed. Stopping Windows VM..."
+    docker-compose -f "$COMPOSE_FILE" down
+  else
+    echo "RDP session closed. Windows VM is still running (windows-vm stop to shut it down)."
+  fi
+}
+
+cmd_stop() {
+  [[ -f $COMPOSE_FILE ]] || die "Windows VM is not configured."
+  docker-compose -f "$COMPOSE_FILE" down
+}
+
+cmd_status() {
+  [[ -f $COMPOSE_FILE ]] || die "Windows VM is not configured. Run: windows-vm install"
+  local status
+  status=$(container_status)
+  if [[ -z $status ]]; then
+    echo "Windows VM container not found. Run: windows-vm launch"
+  elif [[ $status == running ]]; then
+    echo "Windows VM is running"
+    echo "  Web interface: http://127.0.0.1:8006"
+    echo "  RDP:           127.0.0.1:3389"
+  else
+    echo "Windows VM is stopped (status: $status)"
+  fi
+}
+
+cmd_remove() {
+  [[ -f $COMPOSE_FILE ]] || die "Windows VM is not configured."
+  gum confirm --default=false "Remove the Windows VM and delete all associated data? (~/Windows is kept)" || die "Removal cancelled"
+  docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+  docker rmi dockurr/windows 2>/dev/null || true
+  rm -f "$DESKTOP_FILE"
+  rm -rf "$CONFIG_DIR" "$HOME/.windows"
+  echo "Windows VM removed. ~/Windows was left in place."
+}
+
+cmd_usb_list() {
+  if [[ -s $USB_FILE ]]; then
+    cat "$USB_FILE"
+  else
+    echo "No USB devices configured."
+  fi
+}
+
+cmd_usb_add() {
+  local force=false
+  case ${1:-} in
+    --force) force=true ;;
+  esac
+
+  require_bin lsusb gum
+  [[ -f $INSTALLED_MARKER || $force == true ]] || die "Run 'windows-vm launch' once to finish Windows Setup before adding USB devices (--force to override). Attaching a USB mass-storage device before Setup finishes can format it as the system disk."
+  [[ $(container_status) != running ]] || die "Stop the VM first: windows-vm stop"
+
+  local selection
+  selection=$(lsusb | gum choose --header "Select a USB device to pass through") || die "Cancelled"
+  local vidpid desc
+  vidpid=$(sed -n 's/.*ID \([0-9a-f]\{4\}:[0-9a-f]\{4\}\).*/\1/p' <<<"$selection")
+  desc=$(sed -n 's/.*ID [0-9a-f]\{4\}:[0-9a-f]\{4\} //p' <<<"$selection")
+  [[ -n $vidpid ]] || die "Could not parse device ID from: $selection"
+
+  mkdir -p "$CONFIG_DIR"
+  touch "$USB_FILE"
+  grep -qF "$vidpid" "$USB_FILE" || printf '%s %s\n' "$vidpid" "$desc" >>"$USB_FILE"
+  render
+  echo "Added $vidpid ($desc). Restart the VM for the change to take effect: windows-vm stop && windows-vm launch"
+}
+
+cmd_usb_remove() {
+  [[ -s $USB_FILE ]] || die "No USB devices configured."
+  [[ $(container_status) != running ]] || die "Stop the VM first: windows-vm stop"
+
+  local selection
+  selection=$(gum choose --header "Select a USB device to remove" <"$USB_FILE") || die "Cancelled"
+  grep -vF "$selection" "$USB_FILE" >"$USB_FILE.tmp" || true
+  mv "$USB_FILE.tmp" "$USB_FILE"
+  render
+  echo "Removed. Restart the VM for the change to take effect: windows-vm stop && windows-vm launch"
+}
+
+cmd_usb() {
+  case ${1:-} in
+    list) cmd_usb_list ;;
+    add) shift; cmd_usb_add "$@" ;;
+    remove) cmd_usb_remove ;;
+    *) die "Usage: windows-vm usb <list|add|remove>" ;;
+  esac
+}
+
+show_usage() {
+  cat <<'EOF'
+Usage: windows-vm <command> [options]
+
+Commands:
+  install              Configure and start the Windows VM for the first time
+  launch [-k]          Start the VM (if needed) and connect via RDP
+                        -k, --keep-alive   keep the VM running after RDP closes
+  stop                 Stop the running Windows VM
+  status                Show current VM status
+  usb list              List configured USB passthrough devices
+  usb add [--force]     Attach a USB device (VM must be stopped)
+  usb remove            Detach a USB device (VM must be stopped)
+  remove                Remove the VM and its data (keeps ~/Windows)
+  render                Regenerate docker-compose.yml from saved settings
+EOF
+}
+
+case "${1:-}" in
+  install) cmd_install ;;
+  launch | start) shift; cmd_launch "$@" ;;
+  stop | down) cmd_stop ;;
+  status) cmd_status ;;
+  usb) shift; cmd_usb "$@" ;;
+  remove) cmd_remove ;;
+  render) render ;;
+  help | --help | -h | "") show_usage ;;
+  *) echo "Unknown command: $1" >&2; show_usage >&2; exit 2 ;;
+esac

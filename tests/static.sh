@@ -29,7 +29,7 @@ required_helpers=(
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch webapp-focus
-  webapp-launch window-pop windows-close-all xdg-terminal-exec
+  webapp-launch window-pop windows-close-all windows-vm xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do
@@ -98,6 +98,14 @@ if grep -RqsF "$legacy_config" "$root" --exclude-dir=.git; then
   echo 'Legacy namespaced config directory found' >&2
   exit 1
 fi
+
+grep -qxF freerdp "$root/packages/official.txt"
+grep -qxF usbutils "$root/packages/official.txt"
+
+windows_vm="$root/dotfiles/bin/.local/bin/windows-vm"
+for port_bind in '127.0.0.1:8006:8006' '127.0.0.1:3389:3389/tcp' '127.0.0.1:3389:3389/udp'; do
+  grep -qF "$port_bind" "$windows_vm" || { echo "windows-vm must bind $port_bind to loopback" >&2; exit 1; }
+done
 
 if command -v shellcheck >/dev/null; then
   mapfile -t scripts < <(find "$root" -path "$root/.git" -prune -o -type f \( -name '*.sh' -o -perm -u+x \) -print)

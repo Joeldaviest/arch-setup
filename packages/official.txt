@@ -106,6 +106,7 @@ mise
 uv
 docker
 docker-compose
+freerdp
 zram-generator
 fprintd
 libfido2
@@ -127,6 +128,7 @@ cryptsetup
 ufw
 parted
 pciutils
+usbutils
 libnotify
 
 # Gaming

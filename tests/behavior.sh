@@ -185,6 +185,81 @@ test_desktop_firmware_rejects_unknown_action() (
   fi
 )
 
+test_windows_vm_render_writes_loopback_compose() (
+  test_home="$test_root/windows-vm-home"
+  mkdir -p "$test_home/.config/windows-vm"
+  cat >"$test_home/.config/windows-vm/vm.env" <<'EOF'
+RAM_SIZE=8G
+CPU_CORES=4
+DISK_SIZE=128G
+USERNAME=docker
+PASSWORD=admin
+EOF
+
+  HOME=$test_home "$root/dotfiles/bin/.local/bin/windows-vm" render
+
+  compose="$test_home/.config/windows-vm/docker-compose.yml"
+  [[ -f $compose ]] || fail 'windows-vm render did not write docker-compose.yml'
+  [[ $(stat -c %a "$compose") == 600 ]] || fail 'docker-compose.yml is not mode 600'
+  grep -qF 'VERSION: "10-ltsc"' "$compose" || fail 'compose file is missing the Windows version'
+  grep -qF 'RAM_SIZE: "8G"' "$compose" || fail 'compose file is missing RAM_SIZE'
+  grep -qF 'CPU_CORES: "4"' "$compose" || fail 'compose file is missing CPU_CORES'
+  grep -qF 'DISK_SIZE: "128G"' "$compose" || fail 'compose file is missing DISK_SIZE'
+  grep -qF 'USERNAME: "docker"' "$compose" || fail 'compose file is missing USERNAME'
+  grep -qF -- '- /dev/kvm' "$compose" || fail 'compose file is missing /dev/kvm'
+  for port_bind in '127.0.0.1:8006:8006' '127.0.0.1:3389:3389/tcp' '127.0.0.1:3389:3389/udp'; do
+    grep -qF "$port_bind" "$compose" || fail "compose file is missing loopback bind: $port_bind"
+  done
+)
+
+test_windows_vm_render_omits_usb_by_default() (
+  test_home="$test_root/windows-vm-no-usb"
+  mkdir -p "$test_home/.config/windows-vm"
+  cat >"$test_home/.config/windows-vm/vm.env" <<'EOF'
+RAM_SIZE=4G
+CPU_CORES=2
+DISK_SIZE=64G
+USERNAME=docker
+PASSWORD=admin
+EOF
+
+  HOME=$test_home "$root/dotfiles/bin/.local/bin/windows-vm" render
+
+  compose="$test_home/.config/windows-vm/docker-compose.yml"
+  if grep -qF '/dev/bus/usb' "$compose"; then
+    fail 'compose file mounted /dev/bus/usb with no USB devices configured'
+  fi
+  if grep -qF 'usb-host' "$compose"; then
+    fail 'compose file referenced usb-host with no USB devices configured'
+  fi
+)
+
+test_windows_vm_render_includes_configured_usb() (
+  test_home="$test_root/windows-vm-usb"
+  mkdir -p "$test_home/.config/windows-vm"
+  cat >"$test_home/.config/windows-vm/vm.env" <<'EOF'
+RAM_SIZE=4G
+CPU_CORES=2
+DISK_SIZE=64G
+USERNAME=docker
+PASSWORD=admin
+EOF
+  printf '046d:c52b Logitech USB Receiver\n1234:5678 Example Device\n' >"$test_home/.config/windows-vm/usb-devices"
+
+  HOME=$test_home "$root/dotfiles/bin/.local/bin/windows-vm" render
+
+  compose="$test_home/.config/windows-vm/docker-compose.yml"
+  grep -qF -- '- /dev/bus/usb' "$compose" || fail 'compose file did not mount /dev/bus/usb for configured USB devices'
+  grep -qF 'usb-host,vendorid=0x046d,productid=0xc52b' "$compose" || fail 'compose file is missing the first USB device'
+  grep -qF 'usb-host,vendorid=0x1234,productid=0x5678' "$compose" || fail 'compose file is missing the second USB device'
+)
+
+test_windows_vm_rejects_unknown_subcommand() (
+  if "$root/dotfiles/bin/.local/bin/windows-vm" bogus >/dev/null 2>&1; then
+    fail 'windows-vm accepted an unknown subcommand'
+  fi
+)
+
 test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
@@ -193,5 +268,9 @@ test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_webapp_install_creates_every_launcher
 test_desktop_firmware_check_refreshes_then_lists_updates
 test_desktop_firmware_rejects_unknown_action
+test_windows_vm_render_writes_loopback_compose
+test_windows_vm_render_omits_usb_by_default
+test_windows_vm_render_includes_configured_usb
+test_windows_vm_rejects_unknown_subcommand
 
 echo 'Behavior checks passed'

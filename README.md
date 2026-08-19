@@ -92,6 +92,39 @@ wttr.in. To pin it to a specific city, write the city name to
 `~/.config/weather-status/location` (e.g. `echo "London" >
 ~/.config/weather-status/location`).
 
+## Windows VM
+
+`windows-vm` runs Windows in a Docker container (`dockurr/windows`, KVM-accelerated
+QEMU) and connects to it fullscreen over RDP. Setup only installs this command; it does
+not create a VM. Run it yourself, from any directory:
+
+```bash
+windows-vm install   # configure RAM/CPU/disk/credentials, then download and boot Windows 10 LTSC
+windows-vm launch     # start the VM if needed and connect (add -k/--keep-alive to leave it running)
+windows-vm stop
+windows-vm status
+windows-vm remove     # tear down the VM and its data (keeps ~/Windows)
+```
+
+A "Windows" launcher is also added to the app menu. RDP and the setup web viewer
+(`http://127.0.0.1:8006`) are bound to loopback only. `~/Windows` is shared into the VM as
+a drive; the Windows version is fixed to `10-ltsc` and can be changed afterwards by
+editing `~/.config/windows-vm/vm.env` and re-running `windows-vm render`.
+
+There is no GPU passthrough, so this setup is not suitable for gaming or video editing.
+
+USB devices can be passed through while the VM is stopped:
+
+```bash
+windows-vm usb add       # pick a device with lsusb
+windows-vm usb list
+windows-vm usb remove
+```
+
+Attaching a USB mass-storage device before Windows Setup has finished can cause the
+installer to fail, or format that drive as the VM's system disk. `usb add` refuses to run
+until the VM has booted successfully once; pass `--force` to override.
+
 ## Package policy
 
 `packages/official.txt` is installed with pacman. `packages/multilib.txt`
