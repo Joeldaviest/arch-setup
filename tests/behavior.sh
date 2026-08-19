@@ -152,7 +152,7 @@ test_webapp_install_creates_every_launcher() (
   HOME=$test_home "$root/scripts/install-webapps.sh" >/dev/null
 
   app_dir="$test_home/.local/share/applications"
-  for app in WhatsApp 'Google Maps' YouTube GitHub Gmail; do
+  for app in WhatsApp 'Google Maps' YouTube GitHub Gmail 'Work Gmail' 'Work GitHub'; do
     [[ -x $app_dir/$app.desktop ]] || fail "web app launcher was not installed: $app"
     grep -qF 'Exec=' "$app_dir/$app.desktop" || fail "web app launcher has no command: $app"
   done
@@ -161,6 +161,19 @@ test_webapp_install_creates_every_launcher() (
   if grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/WhatsApp.desktop"; then
     fail 'mailto association leaked into a non-Gmail launcher'
   fi
+
+  for app in 'Work Gmail' 'Work GitHub'; do
+    grep -qF -- '--profile-directory=Work' "$app_dir/$app.desktop" || \
+      fail "work web app launcher is missing the Work profile flag: $app"
+    if grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/$app.desktop"; then
+      fail "mailto association leaked into a work launcher: $app"
+    fi
+  done
+  for app in Gmail GitHub; do
+    if grep -qF -- '--profile-directory' "$app_dir/$app.desktop"; then
+      fail "personal web app launcher unexpectedly carries a profile flag: $app"
+    fi
+  done
 )
 
 test_desktop_firmware_check_refreshes_then_lists_updates() (
@@ -201,7 +214,7 @@ EOF
   compose="$test_home/.config/windows-vm/docker-compose.yml"
   [[ -f $compose ]] || fail 'windows-vm render did not write docker-compose.yml'
   [[ $(stat -c %a "$compose") == 600 ]] || fail 'docker-compose.yml is not mode 600'
-  grep -qF 'VERSION: "10-ltsc"' "$compose" || fail 'compose file is missing the Windows version'
+  grep -qF 'VERSION: "10l"' "$compose" || fail 'compose file is missing the Windows version'
   grep -qF 'RAM_SIZE: "8G"' "$compose" || fail 'compose file is missing RAM_SIZE'
   grep -qF 'CPU_CORES: "4"' "$compose" || fail 'compose file is missing CPU_CORES'
   grep -qF 'DISK_SIZE: "128G"' "$compose" || fail 'compose file is missing DISK_SIZE'

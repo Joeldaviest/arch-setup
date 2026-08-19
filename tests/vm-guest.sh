@@ -76,11 +76,15 @@ sudo docker run --rm alpine:latest nslookup archlinux.org >/dev/null || fail 'Do
 [[ -L $HOME/.config/hypr/hyprland.lua ]] || fail 'Hyprland configuration is not managed by Stow'
 
 application_dir="$HOME/.local/share/applications"
-for app in WhatsApp 'Google Maps' YouTube GitHub Gmail; do
+for app in WhatsApp 'Google Maps' YouTube GitHub Gmail 'Work Gmail' 'Work GitHub'; do
   [[ -x $application_dir/$app.desktop ]] || fail "web app launcher is missing: $app"
 done
 grep -qF 'MimeType=x-scheme-handler/mailto;' "$application_dir/Gmail.desktop" || \
   fail 'Gmail mailto association is missing'
+grep -qF -- '--profile-directory=Work' "$application_dir/Work Gmail.desktop" || \
+  fail 'Work Gmail launcher is missing the Work profile flag'
+grep -qF -- '--profile-directory=Work' "$application_dir/Work GitHub.desktop" || \
+  fail 'Work GitHub launcher is missing the Work profile flag'
 
 wallpaper_dir="$HOME/.config/wallpapers"
 [[ -d $wallpaper_dir ]] || fail 'local wallpaper directory is missing'

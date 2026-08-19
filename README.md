@@ -55,6 +55,12 @@ removed. Failed runs and logs are preserved automatically. Use
 The setup installs the complete package set, detects applicable graphics and
 hardware packages, backs up conflicting dotfiles, links the tracked dotfiles
 with GNU Stow, configures services, and creates Chromium web applications.
+`Work Gmail` and `Work GitHub` launch in a separate `Work` Chromium profile
+(`--profile-directory=Work`), so a work Google/GitHub account can stay signed
+in alongside the personal one used everywhere else, including every keyboard
+shortcut. The `Work` profile isn't provisioned by setup — run
+`chromium --profile-directory=Work` once and sign in to the work account
+before using those two launchers.
 Wallpapers are copied to `~/.config/wallpapers`, so the desktop does not depend
 on the repository remaining in place. Each Hyprland session chooses a random
 wallpaper and updates the `~/.config/wallpapers/current` symlink.

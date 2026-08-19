@@ -20,4 +20,8 @@ install_app YouTube 'https://youtube.com/' YouTube.png
 install_app GitHub 'https://github.com/' GitHub.png
 install_app Gmail 'https://mail.google.com/' Gmail.png 'gmail-handler %u'
 install_app Navidrome 'http://127.0.0.1:4533/' Navidrome.png
+install_app 'Work Gmail' 'https://mail.google.com/' Gmail.png \
+  'webapp-launch "https://mail.google.com/" --profile-directory=Work'
+install_app 'Work GitHub' 'https://github.com/' GitHub.png \
+  'webapp-launch "https://github.com/" --profile-directory=Work'
 
