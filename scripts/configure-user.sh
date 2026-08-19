@@ -6,6 +6,11 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/scripts/lib/commo
 xdg-user-dirs-update
 mkdir -p "$HOME/Pictures" "$HOME/Videos" "$HOME/.local/share/applications"
 
+note "Starting Navidrome"
+mkdir -p "$HOME/.local/share/navidrome" "$HOME/Music"
+install -Dm644 "$SETUP_ROOT/docker/navidrome/docker-compose.yaml" "$HOME/.local/share/navidrome/docker-compose.yaml"
+sudo -E docker compose -f "$HOME/.local/share/navidrome/docker-compose.yaml" up -d
+
 note "Configuring MIME defaults"
 xdg-mime default org.gnome.Nautilus.desktop inode/directory
 for mime in image/png image/jpeg image/gif image/webp image/bmp image/tiff; do
