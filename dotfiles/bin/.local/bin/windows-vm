@@ -168,13 +168,6 @@ container_status() {
   docker inspect --format '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || true
 }
 
-windows_started() {
-  local started_at
-  started_at=$(docker inspect --format '{{.State.StartedAt}}' "$CONTAINER_NAME" 2>/dev/null) || return 1
-  [[ -n $started_at ]] || return 1
-  docker logs --since "$started_at" "$CONTAINER_NAME" 2>&1 | grep -qi "windows started successfully"
-}
-
 cmd_launch() {
   load_env
   [[ -f $COMPOSE_FILE ]] || die "Windows VM is not configured. Run: windows-vm install"
@@ -190,13 +183,13 @@ cmd_launch() {
     docker-compose -f "$COMPOSE_FILE" up -d
   fi
 
-  echo "Waiting for Windows VM to start..."
-  local wait_count=0
-  until windows_started; do
-    sleep 2
-    wait_count=$((wait_count + 1))
-    ((wait_count <= 60)) || die "Timeout waiting for the Windows VM to start (check: docker logs $CONTAINER_NAME)"
-  done
+  echo "Waiting for Windows VM to start (first install downloads and provisions Windows, can take 10-15+ minutes)..."
+  local started_at
+  started_at=$(docker inspect --format '{{.State.StartedAt}}' "$CONTAINER_NAME")
+  if ! timeout 3600 docker logs -f --since "$started_at" "$CONTAINER_NAME" 2>&1 \
+      | tee /dev/stderr | grep -qm1 -i "windows started successfully"; then
+    die "Timeout or failure waiting for the Windows VM to start (check: docker logs $CONTAINER_NAME)"
+  fi
   : >"$INSTALLED_MARKER"
 
   # krb5 ships /etc/krb5.conf with default_realm = ATHENA.MIT.EDU. FreeRDP 3
