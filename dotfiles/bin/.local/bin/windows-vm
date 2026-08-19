@@ -55,7 +55,7 @@ render() {
     printf '    image: dockurr/windows\n'
     printf '    container_name: %s\n' "$CONTAINER_NAME"
     printf '    environment:\n'
-    printf '      VERSION: "10-ltsc"\n'
+    printf '      VERSION: "10l"\n'
     printf '      RAM_SIZE: "%s"\n' "$RAM_SIZE"
     printf '      CPU_CORES: "%s"\n' "$CPU_CORES"
     printf '      DISK_SIZE: "%s"\n' "$DISK_SIZE"
