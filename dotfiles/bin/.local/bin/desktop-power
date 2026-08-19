@@ -26,7 +26,7 @@ case $action in
   logout) close_windows; uwsm stop ;;
   reboot) close_windows; systemctl reboot ;;
   shutdown|poweroff) close_windows; systemctl poweroff ;;
-  firmware) tui-launch --size 100x30 desktop-firmware update & disown ;;
+  firmware) setsid -f tui-launch --size 100x30 desktop-firmware update </dev/null >/dev/null 2>&1 ;;
   *) echo "Usage: desktop-power [menu|lock|wake|suspend|logout|reboot|shutdown|firmware]" >&2; exit 2 ;;
 esac
 
