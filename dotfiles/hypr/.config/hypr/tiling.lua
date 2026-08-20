@@ -1,4 +1,13 @@
 -- Control tiling
+
+-- Let SUPER + h/j/k/l (and arrow-key equivalents) cycle tabs inside a group
+-- before walking out of it. Off by default in stock Hyprland.
+hl.config({
+  binds = {
+    movefocus_cycles_groupfirst = true,
+  },
+})
+
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }), { description = "Full screen" })
 hl.bind("SUPER + O", hl.dsp.exec_cmd("window-pop"), { description = "Pop window out (float & pin)" })
 
