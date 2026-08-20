@@ -1,11 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 monitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name')
-scale=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .scale')
 scales=(1 1.25 1.5 1.75 2)
+
+# Track the requested index ourselves rather than reading it back from
+# Hyprland: if a monitor's resolution can't support a given scale, Hyprland
+# silently clamps it to whatever it can do, which then matches none of our
+# scale values and breaks position-tracking based on the reported scale.
+state_file="${XDG_RUNTIME_DIR:-/tmp}/monitor-scale-index-$monitor"
 index=0
-for i in "${!scales[@]}"; do
-  awk -v a="${scales[$i]}" -v b="$scale" 'BEGIN { exit !(a == b) }' && index=$i
-done
+if [[ -f $state_file ]]; then
+  read -r index <"$state_file"
+  [[ $index =~ ^[0-9]+$ && $index -lt ${#scales[@]} ]] || index=0
+fi
+
 if [[ ${1:-} == "--reverse" ]]; then index=$(((index - 1 + ${#scales[@]}) % ${#scales[@]})); else index=$(((index + 1) % ${#scales[@]})); fi
+echo "$index" >"$state_file"
 hyprctl eval "hl.monitor({ output = '$monitor', scale = ${scales[$index]} })"

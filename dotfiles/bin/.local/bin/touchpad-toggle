@@ -5,5 +5,5 @@ case $state in
   off) value=false ;;
   *) current=$(hyprctl getoption input:touchpad:enabled -j | jq -r '.int'); (( current )) && value=false || value=true ;;
 esac
-hyprctl keyword input:touchpad:enabled "$value"
+hyprctl eval "hl.config({ input = { touchpad = { enabled = $value } } })"
 
