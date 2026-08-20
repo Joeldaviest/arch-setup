@@ -1,12 +1,42 @@
 #!/bin/bash
 (( $# >= 1 )) || { echo "Usage: webapp-launch <ssb-id> | webapp-launch --url <url>" >&2; exit 2; }
 
+# Resolves profiles.ini the way Gecko's dedicated-profiles feature does: an
+# [InstallXXXX] section's Default= (this installation's pinned profile) beats
+# any [ProfileN] Default=1 (a legacy/other-install marker) and a bare first
+# Path= (which may belong to a stale, never-used profile).
+resolve_profile_dir() {
+  local ini=$1 section="" cur_path="" install_default="" default_path="" first_path=""
+  while IFS= read -r line || [[ -n $line ]]; do
+    line=${line%$'\r'}
+    if [[ $line == \[*\] ]]; then
+      section=$line
+      cur_path=""
+      continue
+    fi
+    case $section in
+      "[Install"*)
+        [[ $line == Default=* ]] && install_default=${line#Default=}
+        ;;
+      "[Profile"*)
+        if [[ $line == Path=* ]]; then
+          cur_path=${line#Path=}
+          [[ -z $first_path ]] && first_path=$cur_path
+        elif [[ $line == "Default=1" && -n $cur_path ]]; then
+          default_path=$cur_path
+        fi
+        ;;
+    esac
+  done <"$ini"
+  printf '%s\n' "${install_default:-${default_path:-$first_path}}"
+}
+
 profile_root="$HOME/.floorp"
 [[ -d $profile_root ]] || profile_root="${XDG_CONFIG_HOME:-$HOME/.config}/floorp"
 profiles_ini="$profile_root/profiles.ini"
 [[ -f $profiles_ini ]] || { echo "webapp-launch: no Floorp profile found; run configure-floorp.sh first" >&2; exit 1; }
 
-profile_path=$(awk -F= '/^Path=/{print $2; exit}' "$profiles_ini")
+profile_path=$(resolve_profile_dir "$profiles_ini")
 [[ -n $profile_path ]] || { echo "webapp-launch: could not resolve the Floorp profile path" >&2; exit 1; }
 [[ $profile_path == /* ]] || profile_path="$profile_root/$profile_path"
 

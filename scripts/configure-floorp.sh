@@ -7,6 +7,36 @@
 set -Eeuo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/scripts/lib/common.sh"
 
+# Resolves profiles.ini the way Gecko's dedicated-profiles feature does: an
+# [InstallXXXX] section's Default= (this specific installation's pinned
+# profile) beats any [ProfileN] Default=1 (a legacy/other-install marker) and
+# a bare first Path= (which may belong to a stale, never-used profile).
+resolve_profile_dir() {
+  local ini=$1 section="" cur_path="" install_default="" default_path="" first_path=""
+  while IFS= read -r line || [[ -n $line ]]; do
+    line=${line%$'\r'}
+    if [[ $line == \[*\] ]]; then
+      section=$line
+      cur_path=""
+      continue
+    fi
+    case $section in
+      "[Install"*)
+        [[ $line == Default=* ]] && install_default=${line#Default=}
+        ;;
+      "[Profile"*)
+        if [[ $line == Path=* ]]; then
+          cur_path=${line#Path=}
+          [[ -z $first_path ]] && first_path=$cur_path
+        elif [[ $line == "Default=1" && -n $cur_path ]]; then
+          default_path=$cur_path
+        fi
+        ;;
+    esac
+  done <"$ini"
+  printf '%s\n' "${install_default:-${default_path:-$first_path}}"
+}
+
 command_exists jq || die "jq is required"
 pgrep -x floorp >/dev/null 2>&1 && die "Quit Floorp before running this script"
 
@@ -16,7 +46,7 @@ profile_root="$HOME/.floorp"
 
 profiles_ini="$profile_root/profiles.ini"
 [[ -f $profiles_ini ]] || die "Missing $profiles_ini"
-profile_path=$(awk -F= '/^Path=/{print $2; exit}' "$profiles_ini")
+profile_path=$(resolve_profile_dir "$profiles_ini")
 [[ -n $profile_path ]] || die "Could not resolve the Floorp profile path from $profiles_ini"
 [[ $profile_path == /* ]] || profile_path="$profile_root/$profile_path"
 [[ -d $profile_path ]] || die "Floorp profile directory does not exist: $profile_path"
