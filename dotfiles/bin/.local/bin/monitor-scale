@@ -4,7 +4,8 @@ monitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name')
 scale=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .scale')
 scales=(1 1.25 1.5 1.75 2)
 index=0
-for i in "${!scales[@]}"; do [[ ${scales[$i]} == "$scale" ]] && index=$i; done
+for i in "${!scales[@]}"; do
+  awk -v a="${scales[$i]}" -v b="$scale" 'BEGIN { exit !(a == b) }' && index=$i
+done
 if [[ ${1:-} == "--reverse" ]]; then index=$(((index - 1 + ${#scales[@]}) % ${#scales[@]})); else index=$(((index + 1) % ${#scales[@]})); fi
-hyprctl keyword monitor "$monitor,preferred,auto,${scales[$index]}"
-
+hyprctl eval "hl.monitor({ output = '$monitor', scale = ${scales[$index]} })"
