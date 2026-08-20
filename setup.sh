@@ -38,9 +38,9 @@ sudo -v
 install_packages
 "$SETUP_ROOT/scripts/configure-dotfiles.sh"
 "$SETUP_ROOT/scripts/configure-system.sh"
-"$SETUP_ROOT/scripts/install-webapps.sh"
 "$SETUP_ROOT/scripts/configure-user.sh"
 
 success "Setup complete"
 note "Log out and back in (or reboot) before starting the Hyprland session."
+note "Launch Floorp, sign into Firefox Sync, quit Floorp, then run ./scripts/configure-floorp.sh"
 

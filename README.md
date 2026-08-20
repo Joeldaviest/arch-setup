@@ -54,13 +54,29 @@ removed. Failed runs and logs are preserved automatically. Use
 
 The setup installs the complete package set, detects applicable graphics and
 hardware packages, backs up conflicting dotfiles, links the tracked dotfiles
-with GNU Stow, configures services, and creates Chromium web applications.
-`Work Gmail` and `Work GitHub` launch in a separate `Work` Chromium profile
-(`--profile-directory=Work`), so a work Google/GitHub account can stay signed
-in alongside the personal one used everywhere else, including every keyboard
-shortcut. The `Work` profile isn't provisioned by setup — run
-`chromium --profile-directory=Work` once and sign in to the work account
-before using those two launchers.
+with GNU Stow, and configures services. Web applications are **not** created
+by `setup.sh` — Floorp needs a one-time manual step first:
+
+1. Launch Floorp, sign into Firefox Sync, and wait for your containers
+   (including "Work") and extensions to arrive. [Multi-Account Containers
+   syncs container names, colors, icons, and site
+   assignments](https://blog.mozilla.org/security/2020/02/06/multi-account-containers-sync/) —
+   no container needs to be created by hand.
+2. Quit Floorp.
+3. Run `./scripts/configure-floorp.sh`. It seeds Floorp's Workspaces (Personal
+   bound to no container, Work bound to the "Work" container), writes the
+   webapp (SSB) records Floorp itself would normally only create through its
+   address-bar install button, and generates the matching
+   `~/.local/share/applications/floorp-<id>.desktop` launchers: WhatsApp,
+   Google Maps, YouTube, GitHub, Gmail, Navidrome, plus `Work Gmail` and
+   `Work GitHub` bound to the Work container. It's idempotent — re-run it any
+   time (with Floorp closed) to pick up repository changes.
+
+Floorp's per-webapp window class isn't distinguishable under Wayland (every
+Floorp window, PWA or not, currently reports the same class), so unlike the
+old Chromium setup there's no focus-existing-window behavior — every webapp
+keybind and launcher opens a fresh window.
+
 Wallpapers are copied to `~/.config/wallpapers`, so the desktop does not depend
 on the repository remaining in place. Each Hyprland session chooses a random
 wallpaper and updates the `~/.config/wallpapers/current` symlink.

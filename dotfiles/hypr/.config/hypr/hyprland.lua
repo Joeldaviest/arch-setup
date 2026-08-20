@@ -24,7 +24,7 @@ requireLocal("autostart")
 
 -- Application workspace assignments
 hl.window_rule({ match = { class = "^Alacritty$" }, workspace = "1 silent" })
-hl.window_rule({ match = { class = "^(chromium|Chromium)$" }, workspace = "2 silent" })
+hl.window_rule({ match = { class = "^[fF]loorp" }, workspace = "2 silent" })
 hl.window_rule({ match = { class = "^(codium|VSCodium)$" }, workspace = "3 silent" })
 hl.window_rule({ match = { class = "^steam$" }, workspace = "4 silent" })
 hl.window_rule({ match = { class = "^(Lutris|lutris)$" }, workspace = "5 silent" })

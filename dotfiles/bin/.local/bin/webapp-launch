@@ -1,4 +1,19 @@
 #!/bin/bash
-(( $# > 0 )) || { echo "Usage: webapp-launch <url>" >&2; exit 2; }
-exec setsid uwsm-app -- chromium --app="$1" "${@:2}"
+(( $# >= 1 )) || { echo "Usage: webapp-launch <ssb-id> | webapp-launch --url <url>" >&2; exit 2; }
 
+profile_root="$HOME/.floorp"
+[[ -d $profile_root ]] || profile_root="${XDG_CONFIG_HOME:-$HOME/.config}/floorp"
+profiles_ini="$profile_root/profiles.ini"
+[[ -f $profiles_ini ]] || { echo "webapp-launch: no Floorp profile found; run configure-floorp.sh first" >&2; exit 1; }
+
+profile_path=$(awk -F= '/^Path=/{print $2; exit}' "$profiles_ini")
+[[ -n $profile_path ]] || { echo "webapp-launch: could not resolve the Floorp profile path" >&2; exit 1; }
+[[ $profile_path == /* ]] || profile_path="$profile_root/$profile_path"
+
+if [[ $1 == --url ]]; then
+  (( $# >= 2 )) || { echo "Usage: webapp-launch --url <url>" >&2; exit 2; }
+  exec setsid uwsm-app -- floorp --profile "$profile_path" --new-window "$2"
+fi
+
+id=$1
+exec setsid uwsm-app -- floorp --name "floorp-$id" --profile "$profile_path" --start-ssb "$id"

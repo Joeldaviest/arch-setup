@@ -17,10 +17,10 @@ for mime in image/png image/jpeg image/gif image/webp image/bmp image/tiff; do
   xdg-mime default imv.desktop "$mime"
 done
 xdg-mime default com.github.xournalpp.xournalpp.desktop application/pdf
-xdg-settings set default-web-browser chromium.desktop
-xdg-mime default chromium.desktop x-scheme-handler/http
-xdg-mime default chromium.desktop x-scheme-handler/https
-xdg-mime default Gmail.desktop x-scheme-handler/mailto
+xdg-settings set default-web-browser floorp.desktop
+xdg-mime default floorp.desktop x-scheme-handler/http
+xdg-mime default floorp.desktop x-scheme-handler/https
+xdg-mime default floorp-personal-gmail.desktop x-scheme-handler/mailto
 for mime in text/plain text/x-makefile text/x-c++hdr text/x-c++src text/x-chdr text/x-csrc application/x-shellscript application/xml text/xml; do
   xdg-mime default codium.desktop "$mime"
 done

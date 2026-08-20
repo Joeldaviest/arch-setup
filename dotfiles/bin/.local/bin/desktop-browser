@@ -1,5 +1,4 @@
 #!/bin/bash
 args=()
-[[ ${1:-} == "--private" ]] && args+=(--incognito)
-exec uwsm-app -- chromium "${args[@]}"
-
+[[ ${1:-} == "--private" ]] && args+=(--private-window)
+exec uwsm-app -- floorp "${args[@]}"

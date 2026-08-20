@@ -5,5 +5,4 @@ address=${uri#mailto:}
 address=${address%%\?*}
 query="${uri#*\?}"
 [[ $query == "$uri" ]] && query=""
-exec webapp-launch "https://mail.google.com/mail/?view=cm&fs=1&to=$address&$query"
-
+exec webapp-launch --url "https://mail.google.com/mail/?view=cm&fs=1&to=$address&$query"

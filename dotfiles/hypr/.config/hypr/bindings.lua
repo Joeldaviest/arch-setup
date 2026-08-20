@@ -1,12 +1,12 @@
 -- Application bindings
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd("uwsm-app -- nautilus --new-window"), { description = "File manager" })
-hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd('webapp-focus Navidrome "http://127.0.0.1:4533/"'), { description = "Music" })
+hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("webapp-launch navidrome"), { description = "Music" })
 hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("desktop-editor"), { description = "VSCodium" })
 hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("tui-launch lazydocker"), { description = "Docker" })
 hl.bind("SUPER + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm-app -- bitwarden"), { description = "Passwords" })
 
-hl.bind("SUPER + SHIFT + Y", hl.dsp.exec_cmd('webapp-launch "https://youtube.com/"'), { description = "YouTube" })
-hl.bind("SUPER + SHIFT + ALT + G", hl.dsp.exec_cmd('webapp-focus WhatsApp "https://web.whatsapp.com/"'), { description = "WhatsApp" })
+hl.bind("SUPER + SHIFT + Y", hl.dsp.exec_cmd("webapp-launch youtube"), { description = "YouTube" })
+hl.bind("SUPER + SHIFT + ALT + G", hl.dsp.exec_cmd("webapp-launch whatsapp"), { description = "WhatsApp" })
 
 hl.bind(
   "SUPER + T",
@@ -14,7 +14,7 @@ hl.bind(
   { description = "Tmux" }
 )
 hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd('uwsm-app -- xdg-terminal-exec --dir="$(terminal-cwd)"'), { description = "Alacritty" })
-hl.bind("SUPER + G", hl.dsp.exec_cmd("desktop-browser"), { description = "Chromium" })
+hl.bind("SUPER + G", hl.dsp.exec_cmd("desktop-browser"), { description = "Floorp" })
 hl.bind("SUPER + Q", hl.dsp.window.close(), { description = "Close window" })
 hl.bind("SUPER + P", hl.dsp.exec_cmd("desktop-launcher"), { description = "Launch apps" })
 hl.bind("SUPER + H", hl.dsp.focus({ direction = "left" }), { description = "Focus left" })

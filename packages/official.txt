@@ -68,7 +68,6 @@ mpv
 yt-dlp
 
 # Applications
-chromium
 bitwarden
 bitwarden-cli
 libreoffice-fresh

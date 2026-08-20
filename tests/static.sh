@@ -28,7 +28,7 @@ required_helpers=(
   audio-input-mute audio-output-switch desktop-audio desktop-bluetooth desktop-browser
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
-  monitor-scale terminal-cwd touchpad-toggle tui-launch webapp-focus
+  monitor-scale terminal-cwd touchpad-toggle tui-launch
   webapp-launch window-pop windows-close-all windows-vm xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
