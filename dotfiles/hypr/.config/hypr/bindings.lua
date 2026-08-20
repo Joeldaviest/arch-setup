@@ -21,10 +21,6 @@ hl.bind("SUPER + H", hl.dsp.group.cycle({ direction = "left" }), { description =
 hl.bind("SUPER + J", hl.dsp.group.cycle({ direction = "down" }), { description = "Focus down / cycle group down" })
 hl.bind("SUPER + L", hl.dsp.group.cycle({ direction = "right" }), { description = "Focus right / cycle group right" })
 hl.bind("SUPER + K", hl.dsp.group.cycle({ direction = "up" }), { description = "Focus up / cycle group up" })
-hl.bind("SUPER + CTRL + H", hl.dsp.group.merge({ direction = "left" }), { description = "Merge window into group left" })
-hl.bind("SUPER + CTRL + J", hl.dsp.group.merge({ direction = "down" }), { description = "Merge window into group down" })
-hl.bind("SUPER + CTRL + L", hl.dsp.group.merge({ direction = "right" }), { description = "Merge window into group right" })
-hl.bind("SUPER + CTRL + K", hl.dsp.group.merge({ direction = "up" }), { description = "Merge window into group up" })
 hl.bind("SUPER + SHIFT + H", hl.dsp.window.swap({ direction = "left" }), { description = "Move window left" })
 hl.bind("SUPER + SHIFT + J", hl.dsp.window.swap({ direction = "down" }), { description = "Move window down" })
 hl.bind("SUPER + SHIFT + K", hl.dsp.window.swap({ direction = "up" }), { description = "Move window up" })
@@ -47,7 +43,7 @@ hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("desktop-wifi"), { description = "W
 hl.bind("XF86PowerOff", hl.dsp.exec_cmd("desktop-power menu"), { locked = true, description = "Power menu" })
 
 -- Relocated Omarchy functions that conflict with the i3 mappings
-hl.bind("SUPER + E", hl.dsp.group.toggle(), { description = "Toggle tabs/tiling" })
+hl.bind("SUPER + E", hl.dsp.exec_cmd("workspace-group-toggle"), { description = "Toggle tabs/tiling for the whole workspace" })
 hl.bind("SUPER + ALT + K", hl.dsp.exec_cmd("keybindings"), { description = "Show key bindings" })
 
 -- Function row media controls from the previous i3 configuration

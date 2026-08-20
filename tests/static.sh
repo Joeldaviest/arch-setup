@@ -29,7 +29,7 @@ required_helpers=(
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch
-  webapp-launch window-pop windows-close-all windows-vm xdg-terminal-exec
+  webapp-launch window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do

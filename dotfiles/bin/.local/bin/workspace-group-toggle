@@ -1,0 +1,30 @@
+#!/bin/bash
+# i3-style "layout tabbed" for the whole workspace: fold every tiled window
+# on the active workspace into one group, or dissolve it back apart.
+#
+# Batches every dispatch into a single hyprctl call rather than firing
+# separate hyprctl processes per dispatch, which can race/reorder. Running
+# moveintogroup for all 4 directions against every window, twice, is what
+# reliably converges on one group regardless of the current split layout —
+# approach taken from https://gist.github.com/Atrate/b08c5b67172abafa5e7286f4a952ca4d
+set -euo pipefail
+
+if hyprctl -j activewindow | jq -e '.grouped | length > 0' >/dev/null; then
+  hyprctl dispatch togglegroup
+  exit 0
+fi
+
+workspace=$(hyprctl activeworkspace -j | jq -r '.id')
+mapfile -t addresses < <(hyprctl clients -j | jq -r --argjson ws "$workspace" \
+  '.[] | select(.workspace.id == $ws and .floating == false) | .address')
+
+(( ${#addresses[@]} >= 1 )) || exit 0
+
+orig=$(hyprctl activewindow -j | jq -r '.address')
+
+merge_pass=""
+for address in "${addresses[@]}"; do
+  merge_pass+="dispatch focuswindow address:$address; dispatch moveintogroup l; dispatch moveintogroup r; dispatch moveintogroup u; dispatch moveintogroup d;"
+done
+
+hyprctl --batch "dispatch togglegroup; $merge_pass$merge_pass dispatch focuswindow address:$orig"
