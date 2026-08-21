@@ -63,6 +63,7 @@ jq -e '
     ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
   (.clock["tooltip-format"] | contains("{calendar}")) and
   (.mpris.format == "{player_icon} {status_icon}") and
+  (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
   (."power-profiles-daemon".format == "{icon} {profile}") and
   (.battery["on-click"] == "power-profile-cycle") and
   (.idle_inhibitor.timeout == 120)

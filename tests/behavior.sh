@@ -142,11 +142,13 @@ test_storage_status_reports_separate_filesystems_and_swap() (
     PATH="$mock_bin:$PATH" \
     "$root/dotfiles/bin/.local/bin/storage-status")
 
-  [[ $(jq -r .text <<<"$output") == 'DISK 38%' ]] || fail 'storage status did not show the fullest filesystem'
+  [[ $(jq -r .text <<<"$output") == 'DISK 26%' ]] || fail 'storage status did not show combined filesystem usage'
   tooltip=$(jq -r .tooltip <<<"$output")
   [[ $tooltip == *'Root:'* && $tooltip == *'(38%)'* ]] || fail 'storage tooltip omitted root usage'
   [[ $tooltip == *'Home:'* && $tooltip == *'(25%)'* ]] || fail 'storage tooltip omitted home usage'
   [[ $tooltip == *'Swap:'* && $tooltip == *'(25%)'* ]] || fail 'storage tooltip omitted swap usage'
+  [[ $tooltip != *'\n'* ]] || fail 'storage tooltip rendered escaped newlines literally'
+  [[ $(grep -c '^' <<<"$tooltip") == 3 ]] || fail 'storage tooltip did not render one line per storage area'
 )
 
 test_power_profile_cycle_sets_next_profile_and_notifies() (

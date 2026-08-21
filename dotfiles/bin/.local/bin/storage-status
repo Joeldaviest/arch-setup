@@ -44,17 +44,23 @@ else
   home_line="Home: $(human_size "$home_used") / $(human_size "$home_total") used (${home_percent}%) — $(human_size "$home_available") available"
 fi
 
-highest_percent=$root_percent
-((home_percent > highest_percent)) && highest_percent=$home_percent
+combined_total=$root_total
+combined_used=$root_used
+if [[ $home_source != "$root_source" ]]; then
+  combined_total=$((combined_total + home_total))
+  combined_used=$((combined_used + home_used))
+fi
+combined_percent=$((combined_used * 100 / combined_total))
 
 class=normal
-((highest_percent >= 90)) && class=critical
-if ((highest_percent >= 80 && highest_percent < 90)); then
+((combined_percent >= 90)) && class=critical
+if ((combined_percent >= 80 && combined_percent < 90)); then
   class=warning
 fi
 
+tooltip="${root_line}"$'\n'"${home_line}"$'\n'"${swap_line}"
 jq -cn \
-  --arg text "DISK ${highest_percent}%" \
-  --arg tooltip "Storage usage (bar shows fullest filesystem)\n${root_line}\n${home_line}\n${swap_line}" \
+  --arg text "DISK ${combined_percent}%" \
+  --arg tooltip "$tooltip" \
   --arg class "$class" \
   '{text: $text, tooltip: $tooltip, class: $class}'

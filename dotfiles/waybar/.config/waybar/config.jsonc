@@ -72,7 +72,7 @@
     "format": "{player_icon} {status_icon}",
     "format-paused": "{player_icon} {status_icon}",
     "format-stopped": "",
-    "tooltip-format": "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}\nAlbum: {album}\nPosition: {position} / {length}",
+    "tooltip-format": "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}",
     "player-icons": {
       "default": "󰎈",
       "firefox": "",
