@@ -30,9 +30,8 @@
     }
   },
   "clock": {
-    "format": "{:L%I:%M %p  %a %d %b}",
-    "format-alt": "{:L%A, %d %B %Y  W%V}",
-    "tooltip-format": "<big>{:L%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "format": "{:L%I:%M %p}",
+    "tooltip-format": "<big>{:L%A, %d %B %Y}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
       "mode-mon-col": 3,
