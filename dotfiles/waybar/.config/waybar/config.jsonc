@@ -179,8 +179,8 @@
   "idle_inhibitor": {
     "format": "{icon}",
     "format-icons": {"activated": "", "deactivated": ""},
-    "tooltip-format-activated": "Presentation mode active\nAutomatic locking and display blanking are inhibited\nClick to restore normal idle behavior",
-    "tooltip-format-deactivated": "Normal idle behavior active\nClick to enable presentation mode for up to two hours",
+    "tooltip-format-activated": "Presentation mode active\nAutomatic dimming, locking, display blanking and suspend are inhibited\nClick to restore normal idle behavior",
+    "tooltip-format-deactivated": "Normal idle behavior active\nClick to inhibit dimming, locking, display blanking and suspend for up to two hours",
     "timeout": 120
   },
   "tray": {"icon-size": 12, "spacing": 10}

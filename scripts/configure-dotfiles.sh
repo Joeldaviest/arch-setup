@@ -104,6 +104,21 @@ elif [[ -n ${WAYLAND_DISPLAY:-} ]]; then
   disown
 fi
 
+if pgrep -x hypridle >/dev/null 2>&1; then
+  note "Restarting Hypridle to apply idle policy changes"
+  pkill -x hypridle
+  for _ in {1..20}; do
+    pgrep -x hypridle >/dev/null 2>&1 || break
+    sleep 0.1
+  done
+  setsid uwsm-app -- hypridle >/dev/null 2>&1 &
+  disown
+elif [[ -n ${WAYLAND_DISPLAY:-} ]]; then
+  note "Starting Hypridle for the current Wayland session"
+  setsid uwsm-app -- hypridle >/dev/null 2>&1 &
+  disown
+fi
+
 local_dir="$HOME/.config/hypr/local"
 mkdir -p "$local_dir"
 for file in monitors.lua input.lua environment.lua autostart.lua; do

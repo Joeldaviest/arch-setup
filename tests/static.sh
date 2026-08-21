@@ -74,7 +74,8 @@ jq -e '
   (."power-profiles-daemon"["on-click"] == "power-profile-cycle") and
   (.battery["on-click"] == "power-profile-cycle") and
   (.tray.spacing == 10) and
-  (.idle_inhibitor.timeout == 120)
+  (.idle_inhibitor.timeout == 120) and
+  (.idle_inhibitor["tooltip-format-activated"] | contains("dimming") and contains("suspend"))
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '
@@ -98,6 +99,19 @@ if grep -qF 'uwsm-app -- mako' "$root/dotfiles/hypr/.config/hypr/autostart.lua";
 fi
 grep -qF 'scale = 1.0' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"
+
+hypridle_config="$root/dotfiles/hypr/.config/hypr/hypridle.conf"
+grep -qF 'timeout = 600' "$hypridle_config"
+grep -qF 'on-timeout = display-brightness idle-dim; keyboard-brightness off' "$hypridle_config"
+grep -qF 'timeout = 900' "$hypridle_config"
+grep -qF 'on-timeout = desktop-power lock-only' "$hypridle_config"
+grep -qF 'timeout = 930' "$hypridle_config"
+grep -qF 'timeout = 2100' "$hypridle_config"
+grep -qF 'on-timeout = desktop-power idle-suspend' "$hypridle_config"
+grep -qF 'on_unlock_cmd = desktop-power wake' "$hypridle_config"
+grep -qF -- '--what=idle' "$root/dotfiles/bin/.local/bin/desktop-screenrecord"
+grep -qF 'pgrep -x hypridle' "$root/scripts/configure-dotfiles.sh"
+grep -qF 'setsid uwsm-app -- hypridle' "$root/scripts/configure-dotfiles.sh"
 
 grep -qF 'Name=en* eth*' "$root/system/20-wired.network"
 grep -qF 'DHCP=yes' "$root/system/20-wired.network"

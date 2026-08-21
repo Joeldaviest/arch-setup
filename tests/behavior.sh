@@ -188,6 +188,86 @@ LUA
   fi
 )
 
+test_idle_suspend_is_laptop_only() (
+  mock_bin="$test_root/idle-suspend-bin"
+  power_dir="$test_root/idle-power-supplies"
+  command_log="$test_root/idle-suspend-commands"
+  mkdir -p "$mock_bin" "$power_dir/AC0" "$power_dir/mouse_battery"
+  printf 'Mains\n' >"$power_dir/AC0/type"
+  printf 'System\n' >"$power_dir/AC0/scope"
+  printf 'Unknown\n' >"$power_dir/AC0/status"
+  printf 'Battery\n' >"$power_dir/mouse_battery/type"
+  printf 'Device\n' >"$power_dir/mouse_battery/scope"
+  printf 'Discharging\n' >"$power_dir/mouse_battery/status"
+  cat >"$mock_bin/systemctl" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$IDLE_SUSPEND_LOG"
+EOF
+  chmod +x "$mock_bin/systemctl"
+
+  ARCH_SETUP_POWER_SUPPLY_DIR="$power_dir" \
+    IDLE_SUSPEND_LOG="$command_log" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/desktop-power" idle-suspend
+  [[ ! -s $command_log ]] || fail 'desktop idle policy attempted to suspend a battery-less PC'
+
+  mkdir -p "$power_dir/BAT0"
+  printf 'Battery\n' >"$power_dir/BAT0/type"
+  printf 'System\n' >"$power_dir/BAT0/scope"
+  printf 'Charging\n' >"$power_dir/BAT0/status"
+  ARCH_SETUP_POWER_SUPPLY_DIR="$power_dir" \
+    IDLE_SUSPEND_LOG="$command_log" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/desktop-power" idle-suspend
+  [[ ! -s $command_log ]] || fail 'idle policy attempted to suspend a plugged-in laptop'
+
+  printf 'Discharging\n' >"$power_dir/BAT0/status"
+  ARCH_SETUP_POWER_SUPPLY_DIR="$power_dir" \
+    IDLE_SUSPEND_LOG="$command_log" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/desktop-power" idle-suspend
+  [[ $(<"$command_log") == suspend ]] || fail 'laptop idle policy did not request suspend'
+)
+
+test_idle_brightness_never_increases_and_restores() (
+  mock_bin="$test_root/idle-brightness-bin"
+  backlight_dir="$test_root/idle-backlight"
+  command_log="$test_root/idle-brightness-commands"
+  mkdir -p "$mock_bin" "$backlight_dir/panel"
+  cat >"$mock_bin/brightnessctl" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$IDLE_BRIGHTNESS_LOG"
+case ${*: -1} in
+  get) printf '%s\n' "$IDLE_BRIGHTNESS_CURRENT" ;;
+  max) printf '100\n' ;;
+esac
+EOF
+  chmod +x "$mock_bin/brightnessctl"
+
+  ARCH_SETUP_BACKLIGHT_DIR="$backlight_dir" \
+    IDLE_BRIGHTNESS_LOG="$command_log" \
+    IDLE_BRIGHTNESS_CURRENT=80 \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/display-brightness" idle-dim
+  grep -qxF -- '-sd panel set 20' "$command_log" || fail 'idle dim did not cap a bright display at 20 percent'
+
+  : >"$command_log"
+  ARCH_SETUP_BACKLIGHT_DIR="$backlight_dir" \
+    IDLE_BRIGHTNESS_LOG="$command_log" \
+    IDLE_BRIGHTNESS_CURRENT=10 \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/display-brightness" idle-dim
+  grep -qxF -- '-sd panel set 10' "$command_log" || fail 'idle dim increased an already dim display'
+
+  : >"$command_log"
+  ARCH_SETUP_BACKLIGHT_DIR="$backlight_dir" \
+    IDLE_BRIGHTNESS_LOG="$command_log" \
+    IDLE_BRIGHTNESS_CURRENT=10 \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/display-brightness" idle-restore
+  grep -qxF -- '-rd panel' "$command_log" || fail 'idle resume did not restore saved display brightness'
+)
+
 test_storage_status_reports_separate_filesystems_and_swap() (
   mock_bin="$test_root/storage-bin"
   meminfo="$test_root/storage-meminfo"
@@ -313,6 +393,42 @@ test_dotfile_setup_preserves_personal_mako_config() (
 
   HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
   grep -qxF 'personal Mako config' "$test_home/.config/mako/config" || fail 'personal Mako config was removed during migration'
+)
+
+test_dotfile_setup_restarts_running_hypridle() (
+  test_home="$test_root/hypridle-restart-home"
+  mock_bin="$test_root/hypridle-restart-bin"
+  command_log="$test_root/hypridle-restart-commands"
+  stopped="$test_root/hypridle-stopped"
+  mkdir -p "$test_home" "$mock_bin"
+
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/stow"
+  cat >"$mock_bin/pgrep" <<'EOF'
+#!/bin/bash
+if [[ $1 == -x && $2 == hypridle && ! -e $HYPRIDLE_STOPPED ]]; then
+  exit 0
+fi
+exit 1
+EOF
+  cat >"$mock_bin/pkill" <<'EOF'
+#!/bin/bash
+printf 'pkill %s\n' "$*" >>"$HYPRIDLE_RESTART_LOG"
+[[ $1 == -x && $2 == hypridle ]] && touch "$HYPRIDLE_STOPPED"
+EOF
+  cat >"$mock_bin/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$HYPRIDLE_RESTART_LOG"
+EOF
+  chmod +x "$mock_bin/stow" "$mock_bin/pgrep" "$mock_bin/pkill" "$mock_bin/setsid"
+
+  HOME=$test_home \
+    HYPRIDLE_STOPPED=$stopped \
+    HYPRIDLE_RESTART_LOG=$command_log \
+    PATH="$mock_bin:$PATH" \
+    "$root/scripts/configure-dotfiles.sh"
+
+  grep -qxF 'pkill -x hypridle' "$command_log" || fail 'upgrade did not stop the running Hypridle instance'
+  grep -qxF 'setsid uwsm-app -- hypridle' "$command_log" || fail 'upgrade did not restart Hypridle with the new policy'
 )
 
 seed_floorp_profile() {
@@ -515,11 +631,14 @@ test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
 test_wallpaper_start
 test_wallpaper_select_previews_and_applies_safely
+test_idle_suspend_is_laptop_only
+test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap
 test_power_profile_cycle_sets_next_profile_and_notifies
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_dotfile_setup_migrates_running_mako_to_swaync
 test_dotfile_setup_preserves_personal_mako_config
+test_dotfile_setup_restarts_running_hypridle
 test_configure_floorp_creates_every_launcher
 test_configure_floorp_fails_without_work_container
 test_configure_floorp_is_idempotent

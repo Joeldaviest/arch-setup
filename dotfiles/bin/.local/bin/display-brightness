@@ -4,9 +4,26 @@ value=${1:-+5%}
 case $value in
   off|on) hyprctl dispatch dpms "$value"; exit ;;
 esac
-device=$(find /sys/class/backlight -mindepth 1 -maxdepth 1 -printf '%f\n' 2>/dev/null | head -1)
+backlight_dir=${ARCH_SETUP_BACKLIGHT_DIR:-/sys/class/backlight}
+device=$(find "$backlight_dir" -mindepth 1 -maxdepth 1 -printf '%f\n' 2>/dev/null | head -1)
 [[ -n $device ]] || exit 0
+
+case $value in
+  idle-dim)
+    current=$(brightnessctl -d "$device" get)
+    maximum=$(brightnessctl -d "$device" max)
+    target=$((maximum * 20 / 100))
+    ((target > 0)) || target=1
+    ((current < target)) && target=$current
+    brightnessctl -sd "$device" set "$target" >/dev/null
+    exit
+    ;;
+  idle-restore)
+    brightnessctl -rd "$device" >/dev/null 2>&1 || true
+    exit
+    ;;
+esac
+
 brightnessctl -d "$device" set "$value" >/dev/null
 percent=$(brightnessctl -d "$device" -m | cut -d, -f4 | tr -d %)
 desktop-osd --custom-message "Brightness ${percent}%" --custom-icon display-brightness-symbolic
-

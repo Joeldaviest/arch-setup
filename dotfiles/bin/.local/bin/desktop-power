@@ -6,6 +6,24 @@ close_windows() {
   sleep 1
 }
 
+idle_suspend() {
+  local power_supply_dir=${ARCH_SETUP_POWER_SUPPLY_DIR:-/sys/class/power_supply}
+  local supply type scope status
+
+  for supply in "$power_supply_dir"/*; do
+    [[ -r $supply/type && -r $supply/scope && -r $supply/status ]] || continue
+    read -r type <"$supply/type"
+    read -r scope <"$supply/scope"
+    read -r status <"$supply/status"
+    # Device-scoped batteries include wireless mice and keyboards. Only a
+    # discharging system battery proves this is an unplugged laptop.
+    if [[ $type == Battery && $scope == System && $status == Discharging ]]; then
+      systemctl suspend
+      return
+    fi
+  done
+}
+
 action=${1:-menu}
 if [[ $action == "menu" ]]; then
   action=$(printf '%s\n' Lock Suspend Logout Reboot Shutdown Firmware | gum choose --header 'Power') || exit 0
@@ -21,12 +39,16 @@ case $action in
     hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
     [[ $action == "lock-only" ]] || { sleep 3; pgrep -x hyprlock >/dev/null && hyprctl dispatch dpms off >/dev/null; } &
     ;;
-  wake) hyprctl dispatch dpms on >/dev/null 2>&1 || true ;;
+  wake)
+    hyprctl dispatch dpms on >/dev/null 2>&1 || true
+    display-brightness idle-restore
+    keyboard-brightness restore
+    ;;
   suspend) systemctl suspend ;;
+  idle-suspend) idle_suspend ;;
   logout) close_windows; uwsm stop ;;
   reboot) close_windows; systemctl reboot ;;
   shutdown|poweroff) close_windows; systemctl poweroff ;;
   firmware) setsid -f tui-launch --size 100x30 desktop-firmware update </dev/null >/dev/null 2>&1 ;;
-  *) echo "Usage: desktop-power [menu|lock|wake|suspend|logout|reboot|shutdown|firmware]" >&2; exit 2 ;;
+  *) echo "Usage: desktop-power [menu|lock|wake|suspend|idle-suspend|logout|reboot|shutdown|firmware]" >&2; exit 2 ;;
 esac
-
