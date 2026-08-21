@@ -2,8 +2,52 @@
 set -euo pipefail
 directory=${ARCH_SETUP_WALLPAPER_DIR:-$HOME/.config/wallpapers}
 [[ -d $directory ]] || exit 1
-selection=$(find "$directory" -maxdepth 1 -type f | sort | walker --dmenu -p 'Wallpaper') || exit 0
-[[ -f $selection ]] || exit 0
-ln -sfnT "$selection" "$directory/current"
-pkill -x swaybg || true
-setsid uwsm-app -- swaybg -i "$directory/current" -m fill >/dev/null 2>&1 &
+directory=$(realpath -e -- "$directory")
+
+apply_wallpaper() {
+  local requested=$1 selected extension
+
+  selected=$(realpath -e -- "$requested" 2>/dev/null) || {
+    printf 'Wallpaper does not exist: %s\n' "$requested" >&2
+    return 1
+  }
+  [[ -f $selected && $(dirname -- "$selected") == "$directory" ]] || {
+    printf 'Wallpaper must be a file directly inside %s\n' "$directory" >&2
+    return 1
+  }
+
+  extension=${selected##*.}
+  extension=${extension,,}
+  case $extension in
+    jpg|jpeg|png|webp|bmp|gif) ;;
+    *)
+      printf 'Unsupported wallpaper format: %s\n' "$selected" >&2
+      return 1
+      ;;
+  esac
+
+  ln -sfnT "$selected" "$directory/current"
+  pkill -x swaybg || true
+  setsid uwsm-app -- swaybg -i "$directory/current" -m fill >/dev/null 2>&1 &
+}
+
+case ${1:-} in
+  --set)
+    [[ $# == 2 ]] || {
+      printf 'Usage: wallpaper-select [--set FILE]\n' >&2
+      exit 2
+    }
+    apply_wallpaper "$2"
+    ;;
+  "")
+    [[ $# == 0 ]] || exit 2
+    WALKER_WIDTH=1100 \
+      WALKER_MIN_HEIGHT=460 \
+      WALKER_MAX_HEIGHT=460 \
+      exec desktop-launcher -m 'menus:wallpaper'
+    ;;
+  *)
+    printf 'Usage: wallpaper-select [--set FILE]\n' >&2
+    exit 2
+    ;;
+esac

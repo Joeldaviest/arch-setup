@@ -128,6 +128,66 @@ test_wallpaper_start() (
   fi
 )
 
+test_wallpaper_select_previews_and_applies_safely() (
+  test_home="$test_root/wallpaper-select-home"
+  wallpaper_dir="$test_home/.config/wallpapers"
+  mock_bin="$test_root/wallpaper-select-bin"
+  command_log="$test_root/wallpaper-select-commands"
+  mkdir -p "$wallpaper_dir" "$mock_bin"
+  printf 'wallpaper' >"$wallpaper_dir/night's sky.jpg"
+  printf 'unsupported' >"$wallpaper_dir/notes.txt"
+  printf 'outside' >"$test_home/outside.png"
+
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/pkill"
+  cat >"$mock_bin/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$WALLPAPER_SELECT_LOG"
+EOF
+  cat >"$mock_bin/desktop-launcher" <<'EOF'
+#!/bin/bash
+printf 'walker %s %s %s %s\n' "$WALKER_WIDTH" "$WALKER_MIN_HEIGHT" "$WALKER_MAX_HEIGHT" "$*" >>"$WALLPAPER_SELECT_LOG"
+EOF
+  chmod +x "$mock_bin/pkill" "$mock_bin/setsid" "$mock_bin/desktop-launcher"
+
+  ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
+    WALLPAPER_SELECT_LOG="$command_log" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-select" --set "$wallpaper_dir/night's sky.jpg"
+
+  [[ $(readlink -f "$wallpaper_dir/current") == "$wallpaper_dir/night's sky.jpg" ]] || \
+    fail 'wallpaper-select did not update the stable wallpaper link'
+  grep -qxF "setsid uwsm-app -- swaybg -i $wallpaper_dir/current -m fill" "$command_log" || \
+    fail 'wallpaper-select did not restart swaybg with the stable link'
+
+  if ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-select" --set "$test_home/outside.png" >/dev/null 2>&1; then
+    fail 'wallpaper-select accepted a file outside the wallpaper directory'
+  fi
+  if ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-select" --set "$wallpaper_dir/notes.txt" >/dev/null 2>&1; then
+    fail 'wallpaper-select accepted an unsupported file type'
+  fi
+
+  ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
+    WALLPAPER_SELECT_LOG="$command_log" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-select"
+  grep -qxF 'walker 1100 460 460 -m menus:wallpaper' "$command_log" || \
+    fail 'wallpaper-select did not open the dedicated wide Walker menu'
+
+  if command -v lua >/dev/null; then
+    HOME=$test_home ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" lua - "$root" <<'LUA'
+local root = arg[1]
+dofile(root .. "/dotfiles/elephant/.config/elephant/menus/wallpaper.lua")
+local entries = GetEntries()
+assert(#entries == 1, "wallpaper menu included unsupported or synthetic files")
+assert(entries[1].Text:match("^✓ "), "wallpaper menu did not mark the current wallpaper")
+assert(entries[1].Preview == entries[1].Value, "wallpaper menu preview path differs from its value")
+assert(entries[1].PreviewType == "file", "wallpaper menu did not request a file preview")
+LUA
+  fi
+)
+
 test_storage_status_reports_separate_filesystems_and_swap() (
   mock_bin="$test_root/storage-bin"
   meminfo="$test_root/storage-meminfo"
@@ -454,6 +514,7 @@ test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
 test_wallpaper_start
+test_wallpaper_select_previews_and_applies_safely
 test_storage_status_reports_separate_filesystems_and_swap
 test_power_profile_cycle_sets_next_profile_and_notifies
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts

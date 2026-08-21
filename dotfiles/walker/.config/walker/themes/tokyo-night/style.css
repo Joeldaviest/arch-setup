@@ -17,4 +17,6 @@ child:selected { background: alpha(@text, 0.07); }
 .item-box { padding-left: 14px; }
 .item-text-box { all: unset; padding: 14px 0; }
 .item-subtext { font-size: 0; min-height: 0; margin: 0; }
-
+.preview { margin-left: 10px; }
+.preview-box { background: alpha(@base, 0.65); border: 1px solid alpha(@border, 0.35); padding: 8px; }
+.preview-stack { background: alpha(@base, 0.45); }

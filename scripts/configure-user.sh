@@ -33,11 +33,11 @@ systemctl --user enable swayosd-server.service 2>/dev/null || true
 # elephant has no packaged systemd unit; its own CLI generates
 # ~/.config/systemd/user/elephant.service on first run.
 elephant service enable
-systemctl --user start elephant.service
+# Restarting also makes an existing installation discover newly stowed menus.
+systemctl --user restart elephant.service
 
 if [[ $(getent passwd "$USER" | cut -d: -f7) != "/bin/zsh" ]]; then
   sudo chsh -s /bin/zsh "$USER"
 fi
 
 update-desktop-database "$HOME/.local/share/applications"
-

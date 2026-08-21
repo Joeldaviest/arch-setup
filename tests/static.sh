@@ -140,6 +140,31 @@ if grep -RqsF "$root/assets/wallpapers" "$root/dotfiles"; then
   echo 'Runtime wallpaper configuration depends on the repository path' >&2
   exit 1
 fi
+
+wallpaper_menu="$root/dotfiles/elephant/.config/elephant/menus/wallpaper.lua"
+wallpaper_picker="$root/dotfiles/bin/.local/bin/wallpaper-select"
+walker_config="$root/dotfiles/walker/.config/walker/config.toml"
+walker_preview="$root/dotfiles/walker/.config/walker/themes/tokyo-night/preview.xml"
+[[ -f $wallpaper_menu ]] || { echo 'Elephant wallpaper menu is missing' >&2; exit 1; }
+[[ -f $walker_preview ]] || { echo 'Walker preview layout is missing' >&2; exit 1; }
+grep -qF 'PreviewType = "file"' "$wallpaper_menu"
+grep -qF 'Preview = path' "$wallpaper_menu"
+grep -qF 'select = "lua:SetWallpaper"' "$wallpaper_menu"
+grep -qF "desktop-launcher -m 'menus:wallpaper'" "$wallpaper_picker"
+grep -qF 'WALKER_WIDTH=1100' "$wallpaper_picker"
+grep -qF '"menus:wallpaper" = [' "$walker_config"
+grep -qF 'systemctl --user restart elephant.service' "$root/scripts/configure-user.sh"
+if grep -qF -- '--dmenu' "$wallpaper_picker"; then
+  echo 'Wallpaper picker still uses preview-less Walker dmenu mode' >&2
+  exit 1
+fi
+if command -v xmllint >/dev/null; then
+  xmllint --noout "$walker_preview"
+fi
+if command -v luac >/dev/null; then
+  luac -p "$wallpaper_menu"
+fi
+
 legacy_config='.config/arch''-setup'
 if grep -RqsF "$legacy_config" "$root" --exclude-dir=.git; then
   echo 'Legacy namespaced config directory found' >&2
