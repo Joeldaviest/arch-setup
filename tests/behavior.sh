@@ -67,7 +67,7 @@ test_install_includes_multilib_manifest() (
     printf '%s\n' core extra multilib
   }
   pacman() {
-    [[ $1 == -Q && $2 == mako ]]
+    [[ $1 == -Q && ( $2 == mako || $2 == swaybg ) ]]
   }
   sudo() {
     printf '%s\n' "$*" >>"$command_log"
@@ -86,10 +86,13 @@ test_install_includes_multilib_manifest() (
   grep -qE '^pacman -Syu .* lib32-mesa( |$)' "$command_log" || fail 'lib32-mesa was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* umu-launcher( |$)' "$command_log" || fail 'umu-launcher was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* swaync( |$)' "$command_log" || fail 'SwayNC was omitted from the pacman install command'
-  grep -qxF 'pacman -R --noconfirm mako' "$command_log" || fail 'obsolete Mako package was not removed during upgrade'
+  grep -qE '^pacman -Syu .* awww( |$)' "$command_log" || fail 'awww was omitted from the pacman install command'
+  grep -qxF 'pacman -R --noconfirm mako swaybg' "$command_log" || fail 'obsolete wallpaper or notification package was not removed during upgrade'
   swaync_install_line=$(grep -nE '^pacman -Syu .* swaync( |$)' "$command_log" | cut -d: -f1)
-  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako' "$command_log" | cut -d: -f1)
+  awww_install_line=$(grep -nE '^pacman -Syu .* awww( |$)' "$command_log" | cut -d: -f1)
+  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako swaybg' "$command_log" | cut -d: -f1)
   [[ $swaync_install_line -lt $mako_remove_line ]] || fail 'Mako was removed before SwayNC was installed'
+  [[ $awww_install_line -lt $mako_remove_line ]] || fail 'swaybg was removed before awww was installed'
 
   provider_line=$(grep -nE '^yay .* elephant-all-bin( |$)' "$command_log" | cut -d: -f1)
   walker_line=$(grep -nE '^yay .* walker-bin( |$)' "$command_log" | cut -d: -f1)
@@ -115,16 +118,79 @@ test_wallpaper_start() (
 
   mock_bin="$test_root/wallpaper-bin"
   mkdir -p "$mock_bin"
-  printf '#!/bin/bash\nprintf "%%s\\n" "$*"\n' >"$mock_bin/swaybg"
-  chmod +x "$mock_bin/swaybg"
-  swaybg_args=$(HOME=$test_home PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/wallpaper-start")
-  [[ $swaybg_args == "-i $wallpaper_dir/current -m fill" ]] || \
-    fail 'wallpaper-start did not launch swaybg with the stable background link'
+  cat >"$mock_bin/awww" <<'EOF'
+#!/bin/bash
+case $1 in
+  query) exit 0 ;;
+  img) printf '%s\n' "$*" ;;
+esac
+EOF
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/pkill"
+  chmod +x "$mock_bin/awww" "$mock_bin/pkill"
+  awww_args=$(HOME=$test_home PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/wallpaper-start")
+  [[ $awww_args == "img --resize crop --transition-type fade --transition-duration 0.7 --transition-fps 60 "* ]] || \
+    fail 'wallpaper-start did not apply the selected image with the expected awww transition'
 
   empty_home="$test_root/empty-wallpaper-home"
   mkdir -p "$empty_home/.config/wallpapers"
   if HOME=$empty_home "$root/dotfiles/bin/.local/bin/wallpaper-start" --set-only >/dev/null 2>&1; then
     fail 'accepted an empty wallpaper directory'
+  fi
+)
+
+test_wallpaper_apply_recovers_daemon_and_preserves_fallback() (
+  test_home="$test_root/wallpaper-recovery-home"
+  wallpaper_dir="$test_home/.config/wallpapers"
+  mock_bin="$test_root/wallpaper-recovery-bin"
+  command_log="$test_root/wallpaper-recovery-commands"
+  ready="$test_root/wallpaper-recovery-ready"
+  mkdir -p "$wallpaper_dir" "$mock_bin"
+  printf 'wallpaper' >"$wallpaper_dir/recovery image.jpg"
+  ln -s "recovery image.jpg" "$wallpaper_dir/current"
+
+  cat >"$mock_bin/awww" <<'EOF'
+#!/bin/bash
+case $1 in
+  query) [[ -e $AWWW_TEST_READY ]] ;;
+  img)
+    printf 'awww %s\n' "$*" >>"$AWWW_TEST_LOG"
+    [[ ${AWWW_TEST_FAIL_IMG:-0} != 1 ]]
+    ;;
+esac
+EOF
+  cat >"$mock_bin/setsid" <<'EOF'
+#!/bin/bash
+printf 'setsid %s\n' "$*" >>"$AWWW_TEST_LOG"
+touch "$AWWW_TEST_READY"
+EOF
+  cat >"$mock_bin/pkill" <<'EOF'
+#!/bin/bash
+printf 'pkill %s\n' "$*" >>"$AWWW_TEST_LOG"
+EOF
+  chmod +x "$mock_bin/awww" "$mock_bin/setsid" "$mock_bin/pkill"
+
+  HOME=$test_home \
+    AWWW_TEST_READY=$ready \
+    AWWW_TEST_LOG=$command_log \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-start" --apply
+
+  grep -qF 'setsid uwsm-app -- ' "$command_log" || fail 'wallpaper apply did not recover a missing awww daemon'
+  grep -qF ' --daemon' "$command_log" || fail 'wallpaper recovery did not use the managed daemon entry point'
+  grep -qF 'awww img ' "$command_log" || fail 'wallpaper recovery did not retry the image after starting awww'
+  grep -qxF 'pkill -x swaybg' "$command_log" || fail 'successful awww recovery did not retire swaybg'
+
+  : >"$command_log"
+  if HOME=$test_home \
+    AWWW_TEST_READY=$ready \
+    AWWW_TEST_LOG=$command_log \
+    AWWW_TEST_FAIL_IMG=1 \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/wallpaper-start" --apply >/dev/null 2>&1; then
+    fail 'wallpaper apply ignored an awww image failure'
+  fi
+  if grep -qF 'pkill -x swaybg' "$command_log"; then
+    fail 'wallpaper apply removed the swaybg fallback after an awww failure'
   fi
 )
 
@@ -138,16 +204,22 @@ test_wallpaper_select_previews_and_applies_safely() (
   printf 'unsupported' >"$wallpaper_dir/notes.txt"
   printf 'outside' >"$test_home/outside.png"
 
-  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/pkill"
-  cat >"$mock_bin/setsid" <<'EOF'
+  cat >"$mock_bin/awww" <<'EOF'
 #!/bin/bash
-printf 'setsid %s\n' "$*" >>"$WALLPAPER_SELECT_LOG"
+case $1 in
+  query) exit 0 ;;
+  img) printf 'awww %s\n' "$*" >>"$WALLPAPER_SELECT_LOG" ;;
+esac
+EOF
+  cat >"$mock_bin/pkill" <<'EOF'
+#!/bin/bash
+printf 'pkill %s\n' "$*" >>"$WALLPAPER_SELECT_LOG"
 EOF
   cat >"$mock_bin/desktop-launcher" <<'EOF'
 #!/bin/bash
 printf 'walker %s %s %s %s\n' "$WALKER_WIDTH" "$WALKER_MIN_HEIGHT" "$WALKER_MAX_HEIGHT" "$*" >>"$WALLPAPER_SELECT_LOG"
 EOF
-  chmod +x "$mock_bin/pkill" "$mock_bin/setsid" "$mock_bin/desktop-launcher"
+  chmod +x "$mock_bin/awww" "$mock_bin/pkill" "$mock_bin/desktop-launcher"
 
   ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
     WALLPAPER_SELECT_LOG="$command_log" \
@@ -156,8 +228,12 @@ EOF
 
   [[ $(readlink -f "$wallpaper_dir/current") == "$wallpaper_dir/night's sky.jpg" ]] || \
     fail 'wallpaper-select did not update the stable wallpaper link'
-  grep -qxF "setsid uwsm-app -- swaybg -i $wallpaper_dir/current -m fill" "$command_log" || \
-    fail 'wallpaper-select did not restart swaybg with the stable link'
+  grep -qxF "awww img --resize crop --transition-type fade --transition-duration 0.7 --transition-fps 60 $wallpaper_dir/night's sky.jpg" "$command_log" || \
+    fail 'wallpaper-select did not send the selected image to awww'
+  awww_line=$(grep -nF 'awww img ' "$command_log" | head -1 | cut -d: -f1)
+  swaybg_stop_line=$(grep -nF 'pkill -x swaybg' "$command_log" | head -1 | cut -d: -f1)
+  [[ -n $awww_line && -n $swaybg_stop_line && $awww_line -lt $swaybg_stop_line ]] || \
+    fail 'wallpaper-select stopped swaybg before awww displayed the replacement'
 
   if ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" PATH="$mock_bin:$PATH" \
     "$root/dotfiles/bin/.local/bin/wallpaper-select" --set "$test_home/outside.png" >/dev/null 2>&1; then
@@ -369,7 +445,13 @@ test_dotfile_setup_migrates_running_mako_to_swaync() (
   printf '%s\n' \
     '#!/bin/bash' \
     'printf "setsid %s\\n" "$*" >>"$MIGRATION_COMMAND_LOG"' >"$mock_bin/setsid"
-  chmod +x "$mock_bin/stow" "$mock_bin/pgrep" "$mock_bin/pkill" "$mock_bin/setsid"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'case $1 in' \
+    '  query) exit 0 ;;' \
+    '  img) printf "awww %s\\n" "$*" >>"$MIGRATION_COMMAND_LOG" ;;' \
+    'esac' >"$mock_bin/awww"
+  chmod +x "$mock_bin/stow" "$mock_bin/pgrep" "$mock_bin/pkill" "$mock_bin/setsid" "$mock_bin/awww"
 
   HOME=$test_home \
     WAYLAND_DISPLAY=wayland-test \
@@ -380,6 +462,12 @@ test_dotfile_setup_migrates_running_mako_to_swaync() (
   [[ ! -L $test_home/.config/mako/config ]] || fail 'legacy managed Mako link survived migration'
   grep -qxF 'pkill -x mako' "$command_log" || fail 'running Mako was not stopped during migration'
   grep -qxF 'setsid uwsm-app -- swaync' "$command_log" || fail 'SwayNC was not started after stopping Mako'
+  grep -qF 'awww img --resize crop --transition-type fade --transition-duration 0.7 --transition-fps 60 ' "$command_log" || \
+    fail 'live upgrade did not apply a wallpaper through awww'
+  awww_line=$(grep -nF 'awww img ' "$command_log" | cut -d: -f1)
+  swaybg_stop_line=$(grep -nF 'pkill -x swaybg' "$command_log" | cut -d: -f1)
+  [[ -n $awww_line && -n $swaybg_stop_line && $awww_line -lt $swaybg_stop_line ]] || \
+    fail 'live upgrade stopped swaybg before awww displayed a wallpaper'
 )
 
 test_dotfile_setup_preserves_personal_mako_config() (
@@ -630,6 +718,7 @@ test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
 test_wallpaper_start
+test_wallpaper_apply_recovers_daemon_and_preserves_fallback
 test_wallpaper_select_previews_and_applies_safely
 test_idle_suspend_is_laptop_only
 test_idle_brightness_never_increases_and_restores

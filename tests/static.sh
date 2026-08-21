@@ -88,11 +88,17 @@ jq -e '
 ' "$swaync_config" >/dev/null
 
 grep -qxF 'swaync' "$root/packages/official.txt"
+grep -qxF 'awww' "$root/packages/official.txt"
 if grep -qxF 'mako' "$root/packages/official.txt"; then
   echo 'Mako must not remain in the active package manifest' >&2
   exit 1
 fi
+if grep -qxF 'swaybg' "$root/packages/official.txt"; then
+  echo 'swaybg must not remain in the active package manifest' >&2
+  exit 1
+fi
 grep -qxF 'mako' "$root/packages/obsolete.txt"
+grep -qxF 'swaybg' "$root/packages/obsolete.txt"
 grep -qF 'uwsm-app -- swaync' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
 if grep -qF 'uwsm-app -- mako' "$root/dotfiles/hypr/.config/hypr/autostart.lua"; then
   echo 'Mako must not remain in Hyprland autostart' >&2
@@ -165,6 +171,11 @@ hardware_case 'Ethernet controller [1f0a:6801] YT6801' Generic yt6801-dkms
 hardware_case 'VGA compatible controller: AMD/ATI Radeon' Framework qmk-hid
 
 grep -qF 'hl.exec_cmd("uwsm-app -- wallpaper-start")' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
+grep -qF 'awww-daemon --quiet' "$root/dotfiles/bin/.local/bin/wallpaper-start"
+grep -qF 'awww img' "$root/dotfiles/bin/.local/bin/wallpaper-start"
+grep -qF -- '--transition-type fade' "$root/dotfiles/bin/.local/bin/wallpaper-start"
+grep -qF -- '--transition-duration 0.7' "$root/dotfiles/bin/.local/bin/wallpaper-start"
+grep -qF 'pkill -x swaybg' "$root/dotfiles/bin/.local/bin/wallpaper-start"
 if grep -RqsF "$root/assets/wallpapers" "$root/dotfiles"; then
   echo 'Runtime wallpaper configuration depends on the repository path' >&2
   exit 1
@@ -192,6 +203,15 @@ if command -v xmllint >/dev/null; then
 fi
 if command -v luac >/dev/null; then
   luac -p "$wallpaper_menu"
+fi
+
+tmux_config="$root/dotfiles/tmux/.config/tmux/tmux.conf"
+grep -qF 'bind -n M-t split-window -h -c "#{pane_current_path}"' "$tmux_config"
+grep -qF 'bind -n M-S-t split-window -v -c "#{pane_current_path}"' "$tmux_config"
+grep -qF 'bind -n M-q kill-pane' "$tmux_config"
+if grep -qE 'bind -n M-(Enter|S-Enter|Escape) ' "$tmux_config"; then
+  echo 'Legacy tmux Alt pane bindings remain configured' >&2
+  exit 1
 fi
 
 legacy_config='.config/arch''-setup'

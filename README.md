@@ -79,7 +79,8 @@ keybind and launcher opens a fresh window.
 
 Wallpapers are copied to `~/.config/wallpapers`, so the desktop does not depend
 on the repository remaining in place. Each Hyprland session chooses a random
-wallpaper and updates the `~/.config/wallpapers/current` symlink.
+wallpaper, updates the `~/.config/wallpapers/current` symlink, and asks the
+session's `awww` daemon to display it with a short fade transition.
 
 IWD manages Wi-Fi and its network configuration. systemd-networkd supplies
 DHCP for wired interfaces matching `en*` or `eth*`; it does not claim Wi-Fi

@@ -27,8 +27,8 @@ apply_wallpaper() {
   esac
 
   ln -sfnT "$selected" "$directory/current"
-  pkill -x swaybg || true
-  setsid uwsm-app -- swaybg -i "$directory/current" -m fill >/dev/null 2>&1 &
+  ARCH_SETUP_WALLPAPER_DIR="$directory" \
+    "$(dirname -- "${BASH_SOURCE[0]}")/wallpaper-start" --apply
 }
 
 case ${1:-} in

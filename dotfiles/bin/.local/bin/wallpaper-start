@@ -5,24 +5,91 @@ set -Eeuo pipefail
 wallpaper_dir=${ARCH_SETUP_WALLPAPER_DIR:-$HOME/.config/wallpapers}
 background=${ARCH_SETUP_BACKGROUND:-$wallpaper_dir/current}
 
-[[ $# == 0 || ( $# == 1 && $1 == "--set-only" ) ]] || {
-  printf 'Usage: wallpaper-start [--set-only]\n' >&2
+[[ $# == 0 || ( $# == 1 && ( $1 == "--set-only" || $1 == "--apply" || $1 == "--daemon" ) ) ]] || {
+  printf 'Usage: wallpaper-start [--set-only|--apply]\n' >&2
   exit 2
 }
 
-[[ -d $wallpaper_dir ]] || {
-  printf 'Wallpaper directory does not exist: %s\n' "$wallpaper_dir" >&2
-  exit 1
+if [[ ${1:-} == "--daemon" ]]; then
+  exec awww-daemon --quiet
+fi
+
+daemon_ready() {
+  awww query >/dev/null 2>&1
 }
 
-mapfile -d '' -t selected < <(find "$wallpaper_dir" -maxdepth 1 -type f -print0 | shuf -z -n 1)
-(( ${#selected[@]} == 1 )) || {
-  printf 'No wallpapers found in: %s\n' "$wallpaper_dir" >&2
-  exit 1
+wait_for_daemon() {
+  local attempt
+  for attempt in {1..30}; do
+    daemon_ready && return 0
+    sleep 0.1
+  done
+  return 1
 }
 
-mkdir -p "$(dirname "$background")"
-ln -sfnT "${selected[0]}" "$background"
+apply_current() {
+  local image
+  image=$(realpath -e -- "$background" 2>/dev/null) || {
+    printf 'Current wallpaper does not exist: %s\n' "$background" >&2
+    return 1
+  }
+
+  if ! daemon_ready; then
+    setsid uwsm-app -- "$0" --daemon >/dev/null 2>&1 &
+    disown
+    wait_for_daemon || {
+      printf 'awww daemon did not become ready\n' >&2
+      return 1
+    }
+  fi
+
+  awww img \
+    --resize crop \
+    --transition-type fade \
+    --transition-duration 0.7 \
+    --transition-fps 60 \
+    "$image"
+
+  # During an upgrade, keep the old wallpaper visible until awww succeeds.
+  pkill -x swaybg 2>/dev/null || true
+}
+
+if [[ ${1:-} != "--apply" ]]; then
+  [[ -d $wallpaper_dir ]] || {
+    printf 'Wallpaper directory does not exist: %s\n' "$wallpaper_dir" >&2
+    exit 1
+  }
+
+  mapfile -d '' -t selected < <(find "$wallpaper_dir" -maxdepth 1 -type f -print0 | shuf -z -n 1)
+  (( ${#selected[@]} == 1 )) || {
+    printf 'No wallpapers found in: %s\n' "$wallpaper_dir" >&2
+    exit 1
+  }
+
+  mkdir -p "$(dirname "$background")"
+  ln -sfnT "${selected[0]}" "$background"
+fi
 
 [[ ${1:-} == "--set-only" ]] && exit 0
-exec swaybg -i "$background" -m fill
+
+if daemon_ready; then
+  apply_current
+  exit
+fi
+
+if [[ ${1:-} == "--apply" ]]; then
+  apply_current
+  exit
+fi
+
+# Keep the startup process attached to the daemon so UWSM owns its lifetime.
+awww-daemon --quiet &
+daemon_pid=$!
+trap 'kill "$daemon_pid" 2>/dev/null || true' EXIT INT TERM
+wait_for_daemon || {
+  printf 'awww daemon did not become ready\n' >&2
+  wait "$daemon_pid" 2>/dev/null || true
+  exit 1
+}
+apply_current
+wait "$daemon_pid"

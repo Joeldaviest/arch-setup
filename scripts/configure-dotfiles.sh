@@ -134,6 +134,11 @@ mkdir -p "$wallpaper_dir"
 rsync -a "$SETUP_ROOT/assets/wallpapers/" "$wallpaper_dir/"
 ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
   "$SETUP_ROOT/dotfiles/bin/.local/bin/wallpaper-start" --set-only
+if [[ -n ${WAYLAND_DISPLAY:-} ]]; then
+  note "Switching the current Wayland session to awww"
+  ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
+    "$SETUP_ROOT/dotfiles/bin/.local/bin/wallpaper-start" --apply
+fi
 
 if [[ -z $(find "$backup_root" -type f -o -type l | head -1) ]]; then
   rmdir -p "$backup_root" 2>/dev/null || true
