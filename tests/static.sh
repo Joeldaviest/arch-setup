@@ -64,9 +64,10 @@ jq -e '
   (."custom/notification"["on-click-right"] == "swaync-client -d -sw") and
   (["cpu", "memory", "custom/storage"] | all(. as $module |
     ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
-  (.clock.format == "{:L%I:%M %p}") and
+  (.clock.locale == "C") and
+  (.clock.format == "{:%I:%M %p}") and
   (.clock | has("format-alt") | not) and
-  (.clock["tooltip-format"] | contains("%A, %d %B %Y") and contains("{calendar}")) and
+  (.clock["tooltip-format"] | contains("{:%A, %d %B %Y}") and contains("{calendar}")) and
   (.mpris.format == "{player_icon} {status_icon}") and
   (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
   (."power-profiles-daemon".format == "{icon}") and

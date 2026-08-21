@@ -30,8 +30,9 @@
     }
   },
   "clock": {
-    "format": "{:L%I:%M %p}",
-    "tooltip-format": "<big>{:L%A, %d %B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "locale": "C",
+    "format": "{:%I:%M %p}",
+    "tooltip-format": "<big>{:%A, %d %B %Y}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
       "mode-mon-col": 3,
