@@ -49,7 +49,22 @@ setup_line=$(grep -nF "TERM=xterm-256color ./setup.sh' 2>&1" "$root/tests/vm.sh"
   exit 1
 }
 
-jq empty "$root/dotfiles/waybar/.config/waybar/config.jsonc"
+waybar_config="$root/dotfiles/waybar/.config/waybar/config.jsonc"
+jq empty "$waybar_config"
+jq -e '
+  ."modules-left" == ["hyprland/workspaces"] and
+  ."modules-center" == ["clock", "custom/weather"] and
+  ."modules-right" == ["mpris", "pulseaudio", "privacy", "custom/screenrecording",
+    "cpu", "memory", "disk", "power-profiles-daemon", "idle_inhibitor", "custom/dnd",
+    "network", "bluetooth", "battery", "tray"] and
+  (.privacy.modules == [{"type": "audio-in", "tooltip": true, "tooltip-icon-size": 24}]) and
+  (.disk.path == "/") and
+  (["cpu", "memory", "disk"] | all(. as $module |
+    ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
+  (.clock["tooltip-format"] | contains("{calendar}")) and
+  (."power-profiles-daemon".format == "{icon}") and
+  (.idle_inhibitor.timeout == 120)
+' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"
 
 grep -qF 'Name=en* eth*' "$root/system/20-wired.network"

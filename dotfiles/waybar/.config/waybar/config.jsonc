@@ -4,8 +4,23 @@
   "position": "top",
   "height": 26,
   "modules-left": ["hyprland/workspaces"],
-  "modules-center": ["clock", "custom/weather", "custom/screenrecording", "custom/dnd"],
-  "modules-right": ["tray", "bluetooth", "network", "pulseaudio", "cpu", "memory", "battery"],
+  "modules-center": ["clock", "custom/weather"],
+  "modules-right": [
+    "mpris",
+    "pulseaudio",
+    "privacy",
+    "custom/screenrecording",
+    "cpu",
+    "memory",
+    "disk",
+    "power-profiles-daemon",
+    "idle_inhibitor",
+    "custom/dnd",
+    "network",
+    "bluetooth",
+    "battery",
+    "tray"
+  ],
   "hyprland/workspaces": {
     "on-click": "activate",
     "format": "{icon}",
@@ -15,9 +30,23 @@
     }
   },
   "clock": {
-    "format": "{:L%I:%M %p %a %d-%m-%y}",
-    "format-alt": "{:L%d %B W%V %Y}",
-    "tooltip": false
+    "format": "{:L%I:%M %p  %a %d %b}",
+    "format-alt": "{:L%A, %d %B %Y  W%V}",
+    "tooltip-format": "<big>{:L%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "mode-mon-col": 3,
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "iso8601": true,
+      "format": {
+        "months": "<b>{}</b>",
+        "days": "{}",
+        "weeks": "<span color='#565f89'>W{}</span>",
+        "weekdays": "<span color='#7aa2f7'><b>{}</b></span>",
+        "today": "<span color='#f7768e'><b><u>{}</u></b></span>"
+      }
+    }
   },
   "custom/weather": {
     "exec": "weather-status --json",
@@ -39,10 +68,49 @@
     "tooltip": false,
     "on-click": "makoctl mode -t do-not-disturb"
   },
+  "mpris": {
+    "format": "{player_icon} {dynamic}",
+    "format-paused": "{status_icon} <i>{dynamic}</i>",
+    "format-stopped": "",
+    "dynamic-order": ["title", "artist"],
+    "title-len": 24,
+    "artist-len": 18,
+    "dynamic-len": 32,
+    "tooltip-format": "{player_icon} {player} ({status})\n{title}\n{artist}",
+    "player-icons": {
+      "default": "󰎈",
+      "firefox": "",
+      "floorp": "",
+      "mpv": ""
+    },
+    "status-icons": {
+      "playing": "󰐊",
+      "paused": "󰏤",
+      "stopped": "󰓛"
+    }
+  },
+  "privacy": {
+    "icon-spacing": 4,
+    "icon-size": 16,
+    "transition-duration": 250,
+    "modules": [
+      {
+        "type": "audio-in",
+        "tooltip": true,
+        "tooltip-icon-size": 24
+      }
+    ],
+    "ignore-monitor": true
+  },
   "network": {
+    "interval": 2,
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
     "format-wifi": "{icon}", "format-ethernet": "󰀂", "format-disconnected": "󰤮",
-    "tooltip-format-wifi": "{essid} ({frequency} GHz)",
+    "format-disabled": "󰤭",
+    "tooltip-format-wifi": "Network: {essid}\nInterface: {ifname}\nSignal: {signalStrength}% ({frequency} GHz)\nAddress: {ipaddr}\nUpload: {bandwidthUpBytes}\nDownload: {bandwidthDownBytes}",
+    "tooltip-format-ethernet": "Ethernet: {ifname}\nAddress: {ipaddr}\nUpload: {bandwidthUpBytes}\nDownload: {bandwidthDownBytes}",
+    "tooltip-format-disconnected": "Network disconnected",
+    "tooltip-format-disabled": "Wireless disabled",
     "on-click": "desktop-wifi"
   },
   "battery": {
@@ -56,11 +124,54 @@
     "format-connected": "󰂱", "format-no-controller": "", "on-click": "desktop-bluetooth"
   },
   "pulseaudio": {
-    "format": "{icon}", "format-muted": "", "format-icons": {"headphone": "", "default": ["", "", ""]},
-    "on-click": "desktop-audio", "on-click-right": "pamixer -t", "scroll-step": 5
+    "format": "{icon} {volume}%",
+    "format-bluetooth": "{icon} {volume}% ",
+    "format-muted": " muted",
+    "format-icons": {"headphone": "", "default": ["", "", ""]},
+    "tooltip-format": "{desc}\nVolume: {volume}%",
+    "on-click": "desktop-audio",
+    "on-click-right": "pamixer -t",
+    "scroll-step": 5,
+    "max-volume": 150
   },
-  "cpu": {"interval": 5, "format": "󰍛", "on-click": "tui-launch --size 90x32 --font-size 9 btop"},
-  "memory": {"interval": 5, "format": "{percentage}%", "on-click": "tui-launch --size 90x32 --font-size 9 btop"},
+  "cpu": {
+    "interval": 5,
+    "format": "󰍛 {usage}%",
+    "tooltip-format": "CPU usage: {usage}%\nLoad: {load}\nAverage frequency: {avg_frequency} GHz",
+    "on-click": "tui-launch --size 90x32 --font-size 9 btop",
+    "states": {"warning": 80, "critical": 95}
+  },
+  "memory": {
+    "interval": 5,
+    "format": "RAM {percentage}%",
+    "tooltip-format": "Memory: {used:0.1f} GiB / {total:0.1f} GiB\nAvailable: {avail:0.1f} GiB\nSwap: {swapUsed:0.1f} GiB / {swapTotal:0.1f} GiB",
+    "on-click": "tui-launch --size 90x32 --font-size 9 btop",
+    "states": {"warning": 80, "critical": 95}
+  },
+  "disk": {
+    "path": "/",
+    "interval": 30,
+    "format": "DISK {percentage_used}%",
+    "tooltip-format": "Root filesystem: {used} / {total} used ({percentage_used}%)\nAvailable: {free}",
+    "on-click": "tui-launch --size 90x32 --font-size 9 btop",
+    "states": {"warning": 80, "critical": 90}
+  },
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}\nCPU driver: {cpu_driver}\nPlatform driver: {platform_driver}\nClick to cycle profiles",
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
+    }
+  },
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {"activated": "", "deactivated": ""},
+    "tooltip-format-activated": "Presentation mode active\nAutomatic locking and display blanking are inhibited\nClick to restore normal idle behavior",
+    "tooltip-format-deactivated": "Normal idle behavior active\nClick to enable presentation mode for up to two hours",
+    "timeout": 120
+  },
   "tray": {"icon-size": 12, "spacing": 17}
 }
-

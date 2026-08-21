@@ -40,12 +40,14 @@
 
 #cpu,
 #memory,
+#disk,
 #battery,
 #pulseaudio,
-#custom-omarchy,
-#custom-update {
+#power-profiles-daemon,
+#idle_inhibitor,
+#mpris {
   min-width: 12px;
-  margin: 0 7.5px;
+  margin: 0 6px;
 }
 
 #tray {
@@ -92,11 +94,64 @@ tooltip {
   color: @accent;
 }
 
+#mpris.playing {
+  color: @accent;
+}
+
+#mpris.paused {
+  color: @foreground;
+  opacity: 0.75;
+}
+
+#privacy {
+  margin: 0 6px;
+}
+
+#privacy-item.audio-in {
+  min-width: 16px;
+  padding: 0 7px;
+  background-color: #f7768e;
+  color: @background;
+  font-weight: bold;
+}
+
+#custom-screenrecording.recording {
+  min-width: 16px;
+  margin: 0 6px;
+  color: #f7768e;
+  font-weight: bold;
+}
+
+#cpu.warning,
+#memory.warning,
+#disk.warning {
+  color: #e0af68;
+}
+
+#cpu.critical,
+#memory.critical,
+#disk.critical {
+  color: #f7768e;
+  font-weight: bold;
+}
+
+#power-profiles-daemon.performance {
+  color: #ff9e64;
+}
+
+#power-profiles-daemon.power-saver {
+  color: #9ece6a;
+}
+
+#idle_inhibitor.activated {
+  color: #9ece6a;
+  font-weight: bold;
+}
+
 .hidden {
   opacity: 0;
 }
 
-#custom-screenrecording-indicator,
 #custom-idle-indicator,
 #custom-notification-silencing-indicator {
   min-width: 12px;
@@ -104,10 +159,6 @@ tooltip {
   margin-right: 0;
   font-size: 10px;
   padding-bottom: 1px;
-}
-
-#custom-screenrecording-indicator.active {
-  color: #a55555;
 }
 
 #custom-idle-indicator.active,
