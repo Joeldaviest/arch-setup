@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -euo pipefail
+
+root_path=${ARCH_SETUP_ROOT_PATH:-/}
+home_path=${ARCH_SETUP_HOME_PATH:-$HOME}
+meminfo=${ARCH_SETUP_MEMINFO:-/proc/meminfo}
+
+filesystem_stats() {
+  LC_ALL=C df -Pk -- "$1" | awk '
+    NR == 2 {
+      gsub(/%/, "", $5)
+      print $1, $2, $3, $4, $5
+    }
+  '
+}
+
+human_size() {
+  numfmt --from-unit=1024 --to=iec-i --suffix=B --format='%.1f' "$1"
+}
+
+read -r root_source root_total root_used root_available root_percent < <(filesystem_stats "$root_path")
+read -r home_source home_total home_used home_available home_percent < <(filesystem_stats "$home_path")
+
+read -r swap_total swap_free < <(
+  awk '
+    $1 == "SwapTotal:" { total = $2 }
+    $1 == "SwapFree:" { free = $2 }
+    END { print total + 0, free + 0 }
+  ' "$meminfo"
+)
+swap_used=$((swap_total - swap_free))
+if ((swap_total > 0)); then
+  swap_percent=$((swap_used * 100 / swap_total))
+  swap_line="Swap: $(human_size "$swap_used") / $(human_size "$swap_total") used (${swap_percent}%)"
+else
+  swap_line="Swap: disabled"
+fi
+
+root_line="Root: $(human_size "$root_used") / $(human_size "$root_total") used (${root_percent}%) — $(human_size "$root_available") available"
+if [[ $home_source == "$root_source" ]]; then
+  home_line="Home: same filesystem as root"
+else
+  home_line="Home: $(human_size "$home_used") / $(human_size "$home_total") used (${home_percent}%) — $(human_size "$home_available") available"
+fi
+
+highest_percent=$root_percent
+((home_percent > highest_percent)) && highest_percent=$home_percent
+
+class=normal
+((highest_percent >= 90)) && class=critical
+if ((highest_percent >= 80 && highest_percent < 90)); then
+  class=warning
+fi
+
+jq -cn \
+  --arg text "DISK ${highest_percent}%" \
+  --arg tooltip "Storage usage (bar shows fullest filesystem)\n${root_line}\n${home_line}\n${swap_line}" \
+  --arg class "$class" \
+  '{text: $text, tooltip: $tooltip, class: $class}'

@@ -120,6 +120,63 @@ test_wallpaper_start() (
   fi
 )
 
+test_storage_status_reports_separate_filesystems_and_swap() (
+  mock_bin="$test_root/storage-bin"
+  meminfo="$test_root/storage-meminfo"
+  mkdir -p "$mock_bin"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'path=${@: -1}' \
+    'printf "%s\n" "Filesystem 1024-blocks Used Available Capacity Mounted on"' \
+    'case $path in' \
+    '  /test-root) printf "%s\n" "/dev/root 47185920 17825792 27262976 38% /" ;;' \
+    '  /test-home) printf "%s\n" "/dev/home 431104000 107776000 323328000 25% /home" ;;' \
+    '  *) exit 1 ;;' \
+    'esac' >"$mock_bin/df"
+  chmod +x "$mock_bin/df"
+  printf '%s\n' 'SwapTotal:       8060928 kB' 'SwapFree:        6045696 kB' >"$meminfo"
+
+  output=$(ARCH_SETUP_ROOT_PATH=/test-root \
+    ARCH_SETUP_HOME_PATH=/test-home \
+    ARCH_SETUP_MEMINFO="$meminfo" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/storage-status")
+
+  [[ $(jq -r .text <<<"$output") == 'DISK 38%' ]] || fail 'storage status did not show the fullest filesystem'
+  tooltip=$(jq -r .tooltip <<<"$output")
+  [[ $tooltip == *'Root:'* && $tooltip == *'(38%)'* ]] || fail 'storage tooltip omitted root usage'
+  [[ $tooltip == *'Home:'* && $tooltip == *'(25%)'* ]] || fail 'storage tooltip omitted home usage'
+  [[ $tooltip == *'Swap:'* && $tooltip == *'(25%)'* ]] || fail 'storage tooltip omitted swap usage'
+)
+
+test_power_profile_cycle_sets_next_profile_and_notifies() (
+  mock_bin="$test_root/power-profile-bin"
+  state="$test_root/power-profile-state"
+  notifications="$test_root/power-profile-notifications"
+  mkdir -p "$mock_bin"
+  printf '%s\n' balanced >"$state"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'case $1 in' \
+    '  list) printf "%s\n" "  performance:" "* balanced:" "  power-saver:" ;;' \
+    '  get) cat "$POWER_PROFILE_TEST_STATE" ;;' \
+    '  set) printf "%s\n" "$2" >"$POWER_PROFILE_TEST_STATE" ;;' \
+    '  *) exit 1 ;;' \
+    'esac' >"$mock_bin/powerprofilesctl"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'printf "%s\n" "$*" >>"$POWER_PROFILE_TEST_NOTIFICATIONS"' >"$mock_bin/notify-send"
+  chmod +x "$mock_bin/powerprofilesctl" "$mock_bin/notify-send"
+
+  POWER_PROFILE_TEST_STATE="$state" \
+    POWER_PROFILE_TEST_NOTIFICATIONS="$notifications" \
+    PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/power-profile-cycle"
+
+  [[ $(<"$state") == power-saver ]] || fail 'battery click did not cycle to the next power profile'
+  grep -qF 'Power saver' "$notifications" || fail 'power profile change did not produce feedback'
+)
+
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts() (
   test_home="$test_root/configure-home"
   mock_bin="$test_root/mock-bin"
@@ -344,6 +401,8 @@ test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
 test_wallpaper_start
+test_storage_status_reports_separate_filesystems_and_swap
+test_power_profile_cycle_sets_next_profile_and_notifies
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_configure_floorp_creates_every_launcher
 test_configure_floorp_fails_without_work_container

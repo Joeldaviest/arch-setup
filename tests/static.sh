@@ -29,6 +29,7 @@ required_helpers=(
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch
+  power-profile-cycle storage-status
   webapp-launch window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
@@ -55,14 +56,15 @@ jq -e '
   ."modules-left" == ["hyprland/workspaces"] and
   ."modules-center" == ["clock", "custom/weather"] and
   ."modules-right" == ["mpris", "pulseaudio", "privacy", "custom/screenrecording",
-    "cpu", "memory", "disk", "power-profiles-daemon", "idle_inhibitor", "custom/dnd",
-    "network", "bluetooth", "battery", "tray"] and
+    "cpu", "memory", "custom/storage", "idle_inhibitor", "custom/dnd",
+    "network", "bluetooth", "battery", "power-profiles-daemon", "tray"] and
   (.privacy.modules == [{"type": "audio-in", "tooltip": true, "tooltip-icon-size": 24}]) and
-  (.disk.path == "/") and
-  (["cpu", "memory", "disk"] | all(. as $module |
+  (["cpu", "memory", "custom/storage"] | all(. as $module |
     ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
   (.clock["tooltip-format"] | contains("{calendar}")) and
-  (."power-profiles-daemon".format == "{icon}") and
+  (.mpris.format == "{player_icon} {status_icon}") and
+  (."power-profiles-daemon".format == "{icon} {profile}") and
+  (.battery["on-click"] == "power-profile-cycle") and
   (.idle_inhibitor.timeout == 120)
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"

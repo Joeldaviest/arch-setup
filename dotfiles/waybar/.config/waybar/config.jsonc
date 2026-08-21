@@ -12,13 +12,13 @@
     "custom/screenrecording",
     "cpu",
     "memory",
-    "disk",
-    "power-profiles-daemon",
+    "custom/storage",
     "idle_inhibitor",
     "custom/dnd",
     "network",
     "bluetooth",
     "battery",
+    "power-profiles-daemon",
     "tray"
   ],
   "hyprland/workspaces": {
@@ -69,14 +69,10 @@
     "on-click": "makoctl mode -t do-not-disturb"
   },
   "mpris": {
-    "format": "{player_icon} {dynamic}",
-    "format-paused": "{status_icon} <i>{dynamic}</i>",
+    "format": "{player_icon} {status_icon}",
+    "format-paused": "{player_icon} {status_icon}",
     "format-stopped": "",
-    "dynamic-order": ["title", "artist"],
-    "title-len": 24,
-    "artist-len": 18,
-    "dynamic-len": 32,
-    "tooltip-format": "{player_icon} {player} ({status})\n{title}\n{artist}",
+    "tooltip-format": "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}\nAlbum: {album}\nPosition: {position} / {length}",
     "player-icons": {
       "default": "󰎈",
       "firefox": "",
@@ -117,7 +113,9 @@
     "format": "{capacity}% {icon}", "format-discharging": "{icon}",
     "format-charging": "{icon}", "format-plugged": "",
     "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-    "on-click": "desktop-power menu", "states": {"warning": 20, "critical": 10}
+    "on-click": "power-profile-cycle",
+    "on-click-right": "desktop-power menu",
+    "states": {"warning": 20, "critical": 10}
   },
   "bluetooth": {
     "format": "", "format-off": "󰂲", "format-disabled": "󰂲",
@@ -148,16 +146,14 @@
     "on-click": "tui-launch --size 90x32 --font-size 9 btop",
     "states": {"warning": 80, "critical": 95}
   },
-  "disk": {
-    "path": "/",
+  "custom/storage": {
+    "exec": "storage-status",
+    "return-type": "json",
     "interval": 30,
-    "format": "DISK {percentage_used}%",
-    "tooltip-format": "Root filesystem: {used} / {total} used ({percentage_used}%)\nAvailable: {free}",
-    "on-click": "tui-launch --size 90x32 --font-size 9 btop",
-    "states": {"warning": 80, "critical": 90}
+    "on-click": "tui-launch --size 90x32 --font-size 9 btop"
   },
   "power-profiles-daemon": {
-    "format": "{icon}",
+    "format": "{icon} {profile}",
     "tooltip-format": "Power profile: {profile}\nCPU driver: {cpu_driver}\nPlatform driver: {platform_driver}\nClick to cycle profiles",
     "format-icons": {
       "default": "",

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+
+command -v powerprofilesctl >/dev/null 2>&1 || {
+  notify-send -u critical "Power profile" "power-profiles-daemon is unavailable"
+  exit 1
+}
+
+mapfile -t profiles < <(
+  powerprofilesctl list | sed -nE 's/^[[:space:]*]*([a-z][a-z-]*):[[:space:]]*$/\1/p'
+)
+((${#profiles[@]})) || {
+  notify-send -u critical "Power profile" "No power profiles are available"
+  exit 1
+}
+
+current=$(powerprofilesctl get)
+next=${profiles[0]}
+for index in "${!profiles[@]}"; do
+  if [[ ${profiles[$index]} == "$current" ]]; then
+    next=${profiles[$(((index + 1) % ${#profiles[@]}))]}
+    break
+  fi
+done
+
+powerprofilesctl set "$next"
+case $next in
+  performance) label="Performance" icon="" ;;
+  balanced) label="Balanced" icon="" ;;
+  power-saver) label="Power saver" icon="" ;;
+  *) label=$next icon="" ;;
+esac
+notify-send -u low "Power profile" "$icon  $label"
