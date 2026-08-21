@@ -5,7 +5,7 @@ declare -a HARDWARE_AUR_PACKAGES=()
 
 check_package_manifests() {
   local manifest package
-  for manifest in official multilib aur-preinstall aur npm; do
+  for manifest in official multilib aur-preinstall aur npm obsolete; do
     while IFS= read -r package; do
       [[ $package =~ ^[a-zA-Z0-9@._+-]+$ ]] || die "Invalid $manifest package name: $package"
     done < <(read_manifest "$SETUP_ROOT/packages/$manifest.txt")
@@ -51,12 +51,14 @@ bootstrap_yay() {
 }
 
 install_packages() {
-  local -a official multilib aur_preinstall aur npm
+  local -a official multilib aur_preinstall aur npm obsolete installed_obsolete=()
+  local package
   mapfile -t official < <(read_manifest "$SETUP_ROOT/packages/official.txt")
   mapfile -t multilib < <(read_manifest "$SETUP_ROOT/packages/multilib.txt")
   mapfile -t aur_preinstall < <(read_manifest "$SETUP_ROOT/packages/aur-preinstall.txt")
   mapfile -t aur < <(read_manifest "$SETUP_ROOT/packages/aur.txt")
   mapfile -t npm < <(read_manifest "$SETUP_ROOT/packages/npm.txt")
+  mapfile -t obsolete < <(read_manifest "$SETUP_ROOT/packages/obsolete.txt")
 
   if ((${#multilib[@]})) && ! pacman-conf --repo-list | grep -qx multilib; then
     note "Enabling the Arch multilib repository for Steam and 32-bit graphics"
@@ -69,6 +71,15 @@ install_packages() {
 
   note "Updating Arch and installing official packages"
   sudo pacman -Syu --needed --noconfirm "${official[@]}" "${multilib[@]}" "${HARDWARE_PACKAGES[@]}"
+
+  for package in "${obsolete[@]}"; do
+    pacman -Q "$package" >/dev/null 2>&1 && installed_obsolete+=("$package")
+  done
+  if ((${#installed_obsolete[@]})); then
+    note "Removing obsolete managed packages: ${installed_obsolete[*]}"
+    sudo pacman -R --noconfirm "${installed_obsolete[@]}"
+  fi
+
   bootstrap_yay
 
   if ((${#aur_preinstall[@]})); then
@@ -97,6 +108,8 @@ print_dry_run() {
   printf '  %s\n' "${HARDWARE_AUR_PACKAGES[@]}"
   note "npm packages"
   read_manifest "$SETUP_ROOT/packages/npm.txt"
+  note "Obsolete packages removed during upgrades"
+  read_manifest "$SETUP_ROOT/packages/obsolete.txt"
   print_hardware_summary
   note "Would back up conflicting dotfiles, stow configs, install system files, enable services, and create web apps"
 }

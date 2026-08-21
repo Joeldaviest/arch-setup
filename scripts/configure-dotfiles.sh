@@ -6,6 +6,33 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/scripts/lib/commo
 backup_root="$HOME/.local/state/arch-setup/backups/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup_root"
 
+if pgrep -x mako >/dev/null 2>&1; then
+  note "Stopping Mako before switching notification daemons"
+  pkill -x mako
+  for _ in {1..20}; do
+    pgrep -x mako >/dev/null 2>&1 || break
+    sleep 0.1
+  done
+fi
+
+remove_legacy_mako_link() {
+  local path=$1 raw_target link_target
+  [[ -L $path ]] || return 0
+  raw_target=$(readlink -- "$path")
+  if [[ $raw_target == /* ]]; then
+    link_target=$(realpath -m -- "$raw_target")
+  else
+    link_target=$(realpath -m -- "$(dirname -- "$path")/$raw_target")
+  fi
+  [[ $link_target == "$SETUP_ROOT/dotfiles/mako" || $link_target == "$SETUP_ROOT/dotfiles/mako/"* ]] || return 0
+  rm -f -- "$path"
+  note "Removed legacy Mako link $path"
+}
+
+remove_legacy_mako_link "$HOME/.config/mako/config"
+remove_legacy_mako_link "$HOME/.config/mako"
+rmdir "$HOME/.config/mako" 2>/dev/null || true
+
 backup_conflicts() {
   local package=$1 source_file relative target backup
   while IFS= read -r -d '' source_file; do
@@ -66,6 +93,16 @@ note "Linking dotfiles with Stow"
 for package_dir in "$SETUP_ROOT"/dotfiles/*; do
   stow --no-folding --restow --dir="$SETUP_ROOT/dotfiles" --target="$HOME" "$(basename "$package_dir")"
 done
+
+if pgrep -x swaync >/dev/null 2>&1; then
+  note "Reloading SwayNC configuration"
+  swaync-client --reload-config || true
+  swaync-client --reload-css || true
+elif [[ -n ${WAYLAND_DISPLAY:-} ]]; then
+  note "Starting SwayNC for the current Wayland session"
+  setsid uwsm-app -- swaync >/dev/null 2>&1 &
+  disown
+fi
 
 local_dir="$HOME/.config/hypr/local"
 mkdir -p "$local_dir"

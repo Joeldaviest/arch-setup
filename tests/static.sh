@@ -56,9 +56,12 @@ jq -e '
   ."modules-left" == ["hyprland/workspaces"] and
   ."modules-center" == ["clock", "custom/weather"] and
   ."modules-right" == ["mpris", "pulseaudio", "privacy", "custom/screenrecording",
-    "cpu", "memory", "custom/storage", "idle_inhibitor", "custom/dnd",
+    "cpu", "memory", "custom/storage", "idle_inhibitor", "custom/notification",
     "network", "bluetooth", "battery", "power-profiles-daemon", "tray"] and
   (.privacy.modules == [{"type": "audio-in", "tooltip": true, "tooltip-icon-size": 24}]) and
+  (."custom/notification".exec == "swaync-client -swb") and
+  (."custom/notification"["on-click"] == "swaync-client -t -sw") and
+  (."custom/notification"["on-click-right"] == "swaync-client -d -sw") and
   (["cpu", "memory", "custom/storage"] | all(. as $module |
     ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
   (.clock.format == "{:L%I:%M %p}") and
@@ -73,6 +76,27 @@ jq -e '
   (.tray.spacing == 10) and
   (.idle_inhibitor.timeout == 120)
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
+swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
+jq -e '
+  .widgets == ["title", "dnd", "notifications"] and
+  .["notification-grouping"] == true and
+  .["timeout-critical"] == 0 and
+  .["control-center-width"] == 400 and
+  .["notification-window-width"] == 420
+' "$swaync_config" >/dev/null
+
+grep -qxF 'swaync' "$root/packages/official.txt"
+if grep -qxF 'mako' "$root/packages/official.txt"; then
+  echo 'Mako must not remain in the active package manifest' >&2
+  exit 1
+fi
+grep -qxF 'mako' "$root/packages/obsolete.txt"
+grep -qF 'uwsm-app -- swaync' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
+if grep -qF 'uwsm-app -- mako' "$root/dotfiles/hypr/.config/hypr/autostart.lua"; then
+  echo 'Mako must not remain in Hyprland autostart' >&2
+  exit 1
+fi
+grep -qF 'scale = 1.0' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"
 
 grep -qF 'Name=en* eth*' "$root/system/20-wired.network"

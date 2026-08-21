@@ -66,6 +66,9 @@ test_install_includes_multilib_manifest() (
   pacman-conf() {
     printf '%s\n' core extra multilib
   }
+  pacman() {
+    [[ $1 == -Q && $2 == mako ]]
+  }
   sudo() {
     printf '%s\n' "$*" >>"$command_log"
   }
@@ -82,6 +85,11 @@ test_install_includes_multilib_manifest() (
   grep -qE '^pacman -Syu .* steam( |$)' "$command_log" || fail 'steam was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* lib32-mesa( |$)' "$command_log" || fail 'lib32-mesa was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* umu-launcher( |$)' "$command_log" || fail 'umu-launcher was omitted from the pacman install command'
+  grep -qE '^pacman -Syu .* swaync( |$)' "$command_log" || fail 'SwayNC was omitted from the pacman install command'
+  grep -qxF 'pacman -R --noconfirm mako' "$command_log" || fail 'obsolete Mako package was not removed during upgrade'
+  swaync_install_line=$(grep -nE '^pacman -Syu .* swaync( |$)' "$command_log" | cut -d: -f1)
+  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako' "$command_log" | cut -d: -f1)
+  [[ $swaync_install_line -lt $mako_remove_line ]] || fail 'Mako was removed before SwayNC was installed'
 
   provider_line=$(grep -nE '^yay .* elephant-all-bin( |$)' "$command_log" | cut -d: -f1)
   walker_line=$(grep -nE '^yay .* walker-bin( |$)' "$command_log" | cut -d: -f1)
@@ -202,6 +210,49 @@ test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts() (
   printf 'personal' >"$local_wallpapers/personal.jpg"
   HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
   [[ -f $local_wallpapers/personal.jpg ]] || fail 'setup removed a locally added wallpaper'
+)
+
+test_dotfile_setup_migrates_running_mako_to_swaync() (
+  test_home="$test_root/mako-migration-home"
+  mock_bin="$test_root/mako-migration-bin"
+  command_log="$test_root/mako-migration-commands"
+  mkdir -p "$test_home/.config/mako" "$mock_bin"
+  ln -s "$root/dotfiles/mako/.config/mako/config" "$test_home/.config/mako/config"
+
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/stow"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    '[[ $1 == -x && $2 == mako ]]' >"$mock_bin/pgrep"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'printf "pkill %s\\n" "$*" >>"$MIGRATION_COMMAND_LOG"' >"$mock_bin/pkill"
+  printf '%s\n' \
+    '#!/bin/bash' \
+    'printf "setsid %s\\n" "$*" >>"$MIGRATION_COMMAND_LOG"' >"$mock_bin/setsid"
+  chmod +x "$mock_bin/stow" "$mock_bin/pgrep" "$mock_bin/pkill" "$mock_bin/setsid"
+
+  HOME=$test_home \
+    WAYLAND_DISPLAY=wayland-test \
+    MIGRATION_COMMAND_LOG=$command_log \
+    PATH="$mock_bin:$PATH" \
+    "$root/scripts/configure-dotfiles.sh"
+
+  [[ ! -L $test_home/.config/mako/config ]] || fail 'legacy managed Mako link survived migration'
+  grep -qxF 'pkill -x mako' "$command_log" || fail 'running Mako was not stopped during migration'
+  grep -qxF 'setsid uwsm-app -- swaync' "$command_log" || fail 'SwayNC was not started after stopping Mako'
+)
+
+test_dotfile_setup_preserves_personal_mako_config() (
+  test_home="$test_root/personal-mako-home"
+  mock_bin="$test_root/personal-mako-bin"
+  mkdir -p "$test_home/.config/mako" "$mock_bin"
+  printf 'personal Mako config\n' >"$test_home/.config/mako/config"
+  printf '#!/bin/bash\nexit 0\n' >"$mock_bin/stow"
+  printf '#!/bin/bash\nexit 1\n' >"$mock_bin/pgrep"
+  chmod +x "$mock_bin/stow" "$mock_bin/pgrep"
+
+  HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
+  grep -qxF 'personal Mako config' "$test_home/.config/mako/config" || fail 'personal Mako config was removed during migration'
 )
 
 seed_floorp_profile() {
@@ -406,6 +457,8 @@ test_wallpaper_start
 test_storage_status_reports_separate_filesystems_and_swap
 test_power_profile_cycle_sets_next_profile_and_notifies
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
+test_dotfile_setup_migrates_running_mako_to_swaync
+test_dotfile_setup_preserves_personal_mako_config
 test_configure_floorp_creates_every_launcher
 test_configure_floorp_fails_without_work_container
 test_configure_floorp_is_idempotent

@@ -46,7 +46,7 @@
 #power-profiles-daemon,
 #idle_inhibitor,
 #mpris,
-#custom-dnd,
+#custom-notification,
 #network,
 #bluetooth,
 #tray {
@@ -77,7 +77,12 @@ tooltip {
   padding: 0;
 }
 
-#custom-dnd.active {
+#custom-notification.dnd-notification,
+#custom-notification.dnd-none,
+#custom-notification.inhibited-notification,
+#custom-notification.inhibited-none,
+#custom-notification.dnd-inhibited-notification,
+#custom-notification.dnd-inhibited-none {
   color: @accent;
 }
 

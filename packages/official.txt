@@ -11,7 +11,7 @@ hyprlock
 hyprpicker
 uwsm
 waybar
-mako
+swaync
 swayosd
 swaybg
 xdg-desktop-portal-gtk

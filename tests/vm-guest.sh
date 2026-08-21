@@ -21,6 +21,12 @@ for manifest in official multilib aur-preinstall aur; do
   done < <(read_manifest "$root/packages/$manifest.txt")
 done
 
+while IFS= read -r package; do
+  if pacman -Q "$package" >/dev/null 2>&1; then
+    fail "obsolete managed package is still installed: $package"
+  fi
+done < <(read_manifest "$root/packages/obsolete.txt")
+
 pci=$(lspci -nn)
 if ! grep -qiE '(VGA|Display).*(AMD|Intel|NVIDIA)|(AMD|Intel|NVIDIA).*(VGA|Display)' <<<"$pci"; then
   pacman -Q vulkan-swrast >/dev/null 2>&1 || fail 'software Vulkan provider is missing for the virtual GPU'

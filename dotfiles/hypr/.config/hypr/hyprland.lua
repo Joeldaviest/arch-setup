@@ -9,6 +9,14 @@ require("./tiling.lua")
 require("./bindings.lua")
 require("./autostart.lua")
 
+-- Safe fallback for every output; machine-specific monitor rules below can override it.
+hl.monitor({
+  output = "",
+  mode = "preferred",
+  position = "auto",
+  scale = 1.0,
+})
+
 -- Per-machine, untracked overrides
 local function requireLocal(name)
   local ok, err = pcall(require, "./local/" .. name .. ".lua")

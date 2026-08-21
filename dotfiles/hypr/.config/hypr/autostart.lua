@@ -1,6 +1,6 @@
 hl.on("hyprland.start", function()
   hl.exec_cmd("uwsm-app -- hypridle")
-  hl.exec_cmd("uwsm-app -- mako")
+  hl.exec_cmd("uwsm-app -- swaync")
   hl.exec_cmd("uwsm-app -- waybar")
   hl.exec_cmd("uwsm-app -- fcitx5 --disable notificationitem")
   hl.exec_cmd("uwsm-app -- wallpaper-start")

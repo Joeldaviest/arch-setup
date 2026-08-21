@@ -14,7 +14,7 @@
     "memory",
     "custom/storage",
     "idle_inhibitor",
-    "custom/dnd",
+    "custom/notification",
     "network",
     "bluetooth",
     "battery",
@@ -60,12 +60,26 @@
     "interval": 2,
     "on-click": "desktop-screenrecord --stop-recording"
   },
-  "custom/dnd": {
-    "exec": "makoctl mode | grep -q do-not-disturb && echo '{\"text\":\"󰂛\",\"class\":\"active\"}' || echo '{\"text\":\"󰂚\",\"class\":\"inactive\"}'",
+  "custom/notification": {
+    "exec-if": "command -v swaync-client",
+    "exec": "swaync-client -swb",
     "return-type": "json",
-    "interval": 2,
-    "tooltip": false,
-    "on-click": "makoctl mode -t do-not-disturb"
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "󰂚<span foreground='#f7768e'><sup></sup></span>",
+      "none": "󰂚",
+      "dnd-notification": "󰂛<span foreground='#f7768e'><sup></sup></span>",
+      "dnd-none": "󰂛",
+      "inhibited-notification": "󰂛<span foreground='#f7768e'><sup></sup></span>",
+      "inhibited-none": "󰂛",
+      "dnd-inhibited-notification": "󰂛<span foreground='#f7768e'><sup></sup></span>",
+      "dnd-inhibited-none": "󰂛"
+    },
+    "tooltip": true,
+    "tooltip-format": "Left click: notifications\nRight click: do not disturb",
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
   },
   "mpris": {
     "format": "{player_icon} {status_icon}",
