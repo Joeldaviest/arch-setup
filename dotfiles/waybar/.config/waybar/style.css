@@ -45,21 +45,13 @@
 #pulseaudio,
 #power-profiles-daemon,
 #idle_inhibitor,
-#mpris {
-  min-width: 12px;
-  margin: 0 6px;
-}
-
+#mpris,
+#custom-dnd,
+#network,
+#bluetooth,
 #tray {
-  margin-right: 16px;
-}
-
-#bluetooth {
-  margin-right: 17px;
-}
-
-#network {
-  margin-right: 13px;
+  min-width: 12px;
+  margin: 0 5px;
 }
 
 tooltip {
@@ -85,11 +77,6 @@ tooltip {
   padding: 0;
 }
 
-#custom-dnd {
-  margin-left: 7.5px;
-  margin-right: 7.5px;
-}
-
 #custom-dnd.active {
   color: @accent;
 }
@@ -104,11 +91,12 @@ tooltip {
 }
 
 #privacy {
-  margin: 0 6px;
+  margin: 0;
 }
 
 #privacy-item.audio-in {
   min-width: 16px;
+  margin: 0 5px;
   padding: 0 7px;
   background-color: #f7768e;
   color: @background;
@@ -117,7 +105,7 @@ tooltip {
 
 #custom-screenrecording.recording {
   min-width: 16px;
-  margin: 0 6px;
+  margin: 0 5px;
   color: #f7768e;
   font-weight: bold;
 }

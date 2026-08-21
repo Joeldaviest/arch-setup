@@ -153,7 +153,7 @@
   },
   "power-profiles-daemon": {
     "format": "{icon}",
-    "tooltip-format": "Power profile: {profile}\nCPU driver: {cpu_driver}\nPlatform driver: {platform_driver}\nClick to cycle profiles",
+    "tooltip": false,
     "on-click": "power-profile-cycle",
     "format-icons": {
       "default": "",
@@ -169,5 +169,5 @@
     "tooltip-format-deactivated": "Normal idle behavior active\nClick to enable presentation mode for up to two hours",
     "timeout": 120
   },
-  "tray": {"icon-size": 12, "spacing": 17}
+  "tray": {"icon-size": 12, "spacing": 10}
 }

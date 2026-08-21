@@ -67,9 +67,10 @@ jq -e '
   (.mpris.format == "{player_icon} {status_icon}") and
   (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
   (."power-profiles-daemon".format == "{icon}") and
-  (."power-profiles-daemon"["tooltip-format"] | contains("{profile}")) and
+  (."power-profiles-daemon".tooltip == false) and
   (."power-profiles-daemon"["on-click"] == "power-profile-cycle") and
   (.battery["on-click"] == "power-profile-cycle") and
+  (.tray.spacing == 10) and
   (.idle_inhibitor.timeout == 120)
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
 jq empty "$root/dotfiles/misc/.config/fastfetch/config.jsonc"
