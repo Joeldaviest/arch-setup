@@ -152,8 +152,9 @@
     "on-click": "tui-launch --size 90x32 --font-size 9 btop"
   },
   "power-profiles-daemon": {
-    "format": "{icon} {profile}",
+    "format": "{icon}",
     "tooltip-format": "Power profile: {profile}\nCPU driver: {cpu_driver}\nPlatform driver: {platform_driver}\nClick to cycle profiles",
+    "on-click": "power-profile-cycle",
     "format-icons": {
       "default": "",
       "performance": "",
