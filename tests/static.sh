@@ -113,6 +113,20 @@ grep -qF -- '--what=idle' "$root/dotfiles/bin/.local/bin/desktop-screenrecord"
 grep -qF 'pgrep -x hypridle' "$root/scripts/configure-dotfiles.sh"
 grep -qF 'setsid uwsm-app -- hypridle' "$root/scripts/configure-dotfiles.sh"
 
+hyprlock_config="$root/dotfiles/hypr/.config/hypr/hyprlock.conf"
+grep -qF 'immediate_render = true' "$hyprlock_config"
+grep -qF 'fractional_scaling = 2' "$hyprlock_config"
+grep -qF 'hide_cursor = true' "$hyprlock_config"
+grep -qF 'brightness = 0.45' "$hyprlock_config"
+grep -qF 'size = 420, 64' "$hyprlock_config"
+grep -qF 'check_color = $check_color' "$hyprlock_config"
+grep -qF 'fail_color = $fail_color' "$hyprlock_config"
+grep -qF 'capslock_color = $capslock_color' "$hyprlock_config"
+if grep -qE '^[[:space:]]*(label|image|shape)[[:space:]]*\{' "$hyprlock_config"; then
+  echo 'Hyprlock must remain free of clock, user, and informational widgets' >&2
+  exit 1
+fi
+
 grep -qF 'Name=en* eth*' "$root/system/20-wired.network"
 grep -qF 'DHCP=yes' "$root/system/20-wired.network"
 grep -qF 'RequiredForOnline=no' "$root/system/20-wired.network"
