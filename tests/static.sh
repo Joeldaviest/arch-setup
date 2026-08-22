@@ -104,10 +104,11 @@ jq -e '
   (.idle_inhibitor.timeout == 120) and
   (.idle_inhibitor["tooltip-format-activated"] | contains("dimming") and contains("suspend"))
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
-grep -qF '#workspaces button.urgent label,' "$waybar_style"
-grep -qF '#workspaces button.urgent .workspace-label {' "$waybar_style"
-grep -A5 -F '#workspaces button.urgent .workspace-label {' "$waybar_style" | grep -qF 'background-color: #f7768e;'
-grep -A5 -F '#workspaces button.urgent .workspace-label {' "$waybar_style" | grep -qF 'color: @foreground;'
+grep -qF 'window#waybar {' "$waybar_style"
+grep -A2 -F 'window#waybar {' "$waybar_style" | grep -qF 'background-color: @background;'
+grep -qF '#workspaces button.urgent {' "$waybar_style"
+grep -A5 -F '#workspaces button.urgent {' "$waybar_style" | grep -qF 'background-color: #f7768e;'
+grep -A5 -F '#workspaces button.urgent {' "$waybar_style" | grep -qF 'color: @foreground;'
 grep -qF 'focus_on_activate = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '

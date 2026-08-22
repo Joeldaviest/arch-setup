@@ -3,7 +3,7 @@
 @define-color accent #7aa2f7;
 
 * {
-  background-color: @background;
+  background-color: transparent;
   color: @foreground;
 
   border: none;
@@ -11,6 +11,10 @@
   min-height: 0;
   font-family: "JetBrainsMono Nerd Font";
   font-size: 12px;
+}
+
+window#waybar {
+  background-color: @background;
 }
 
 .modules-left {
@@ -38,9 +42,7 @@
   opacity: 1;
 }
 
-#workspaces button.urgent,
-#workspaces button.urgent label,
-#workspaces button.urgent .workspace-label {
+#workspaces button.urgent {
   background-color: #f7768e;
   color: @foreground;
   font-weight: bold;
