@@ -9,7 +9,7 @@
   border: none;
   border-radius: 0;
   min-height: 0;
-  font-family: 'JetBrainsMono Nerd Font';
+  font-family: "JetBrainsMono Nerd Font";
   font-size: 12px;
 }
 
@@ -38,7 +38,9 @@
   opacity: 1;
 }
 
-#workspaces button.urgent {
+#workspaces button.urgent,
+#workspaces button.urgent label,
+#workspaces button.urgent .workspace-label {
   background-color: #f7768e;
   color: @foreground;
   font-weight: bold;
