@@ -111,5 +111,5 @@ print_dry_run() {
   note "Obsolete packages removed during upgrades"
   read_manifest "$SETUP_ROOT/packages/obsolete.txt"
   print_hardware_summary
-  note "Would back up conflicting dotfiles, stow configs, install system files, enable services, and create web apps"
+  note "Would back up conflicting dotfiles, stow configs, install system files, and enable services"
 }

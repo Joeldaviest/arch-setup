@@ -519,104 +519,6 @@ EOF
   grep -qxF 'setsid uwsm-app -- hypridle' "$command_log" || fail 'upgrade did not restart Hypridle with the new policy'
 )
 
-seed_floorp_profile() {
-  local test_home=$1 work_context=${2:-2}
-  mkdir -p "$test_home/.floorp/default"
-  cat >"$test_home/.floorp/profiles.ini" <<EOF
-[Profile0]
-Name=default
-IsRelative=1
-Path=default
-Default=1
-
-[General]
-StartWithLastProfile=1
-Version=2
-EOF
-  touch "$test_home/.floorp/default/prefs.js"
-  jq -n --argjson work_context "$work_context" '{
-    version: 6, lastUserContextId: 5,
-    identities: [
-      {userContextId: 1, public: true, icon: "fingerprint", color: "blue", l10nId: "user-context-personal"},
-      {userContextId: $work_context, public: true, icon: "briefcase", color: "orange", name: "Work"}
-    ]
-  }' >"$test_home/.floorp/default/containers.json"
-}
-
-test_configure_floorp_creates_every_launcher() (
-  test_home="$test_root/floorp-home"
-  mkdir -p "$test_home"
-  seed_floorp_profile "$test_home"
-
-  HOME=$test_home "$root/scripts/configure-floorp.sh" >/dev/null
-
-  app_dir="$test_home/.local/share/applications"
-  for id in whatsapp google-maps youtube github personal-gmail navidrome work-gmail work-github; do
-    [[ -x $app_dir/floorp-$id.desktop ]] || fail "web app launcher was not installed: $id"
-    grep -qF 'Exec=' "$app_dir/floorp-$id.desktop" || fail "web app launcher has no command: $id"
-    grep -qF -- "--start-ssb $id" "$app_dir/floorp-$id.desktop" || fail "web app launcher has the wrong SSB id: $id"
-  done
-
-  grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/floorp-personal-gmail.desktop" || \
-    fail 'Gmail mailto association is missing'
-  if grep -qF 'MimeType=x-scheme-handler/mailto;' "$app_dir/floorp-whatsapp.desktop"; then
-    fail 'mailto association leaked into a non-Gmail launcher'
-  fi
-
-  ssb_json="$test_home/.floorp/default/ssb/ssb.json"
-  [[ $(jq '."https://mail.google.com/:0".id' "$ssb_json") == '"personal-gmail"' ]] || \
-    fail 'personal Gmail SSB record is missing or wrong'
-  [[ $(jq '."https://mail.google.com/:2".id' "$ssb_json") == '"work-gmail"' ]] || \
-    fail 'work Gmail SSB record is missing or wrong'
-  [[ $(jq '."https://github.com/:2".id' "$ssb_json") == '"work-github"' ]] || \
-    fail 'work GitHub SSB record is missing or wrong'
-
-  prefs_js="$test_home/.floorp/default/prefs.js"
-  grep -qF 'user_pref("floorp.workspaces.enabled", true);' "$prefs_js" || fail 'workspaces were not enabled'
-  store_line=$(grep -F 'user_pref("floorp.workspaces.v4.store"' "$prefs_js")
-  [[ -n $store_line ]] || fail 'workspace store pref is missing'
-  quoted_value=$(sed -E 's/^user_pref\("floorp\.workspaces\.v4\.store", (.*)\);$/\1/' <<<"$store_line")
-  store_json=$(jq -r . <<<"$quoted_value")
-  echo "$store_json" | jq -e '.data[] | select(.[1].name=="Work") | .[1].userContextId == 2' >/dev/null || \
-    fail 'workspace store does not bind Work to the Work container'
-)
-
-test_configure_floorp_fails_without_work_container() (
-  test_home="$test_root/floorp-home-no-work"
-  mkdir -p "$test_home/.floorp/default"
-  cat >"$test_home/.floorp/profiles.ini" <<'EOF'
-[Profile0]
-Name=default
-IsRelative=1
-Path=default
-Default=1
-EOF
-  touch "$test_home/.floorp/default/prefs.js"
-  echo '{"version":6,"lastUserContextId":1,"identities":[]}' >"$test_home/.floorp/default/containers.json"
-
-  if HOME=$test_home "$root/scripts/configure-floorp.sh" >/dev/null 2>&1; then
-    fail 'configure-floorp.sh should fail when no Work container exists'
-  fi
-)
-
-test_configure_floorp_is_idempotent() (
-  test_home="$test_root/floorp-home-idempotent"
-  mkdir -p "$test_home"
-  seed_floorp_profile "$test_home"
-
-  HOME=$test_home "$root/scripts/configure-floorp.sh" >/dev/null
-  HOME=$test_home "$root/scripts/configure-floorp.sh" >/dev/null
-
-  prefs_js="$test_home/.floorp/default/prefs.js"
-  [[ $(grep -cF 'user_pref("floorp.workspaces.enabled"' "$prefs_js") == 1 ]] || \
-    fail 're-running configure-floorp.sh duplicated the workspaces.enabled pref'
-  [[ $(grep -cF 'user_pref("floorp.workspaces.v4.store"' "$prefs_js") == 1 ]] || \
-    fail 're-running configure-floorp.sh duplicated the workspace store pref'
-
-  ssb_json="$test_home/.floorp/default/ssb/ssb.json"
-  [[ $(jq 'keys | length' "$ssb_json") == 8 ]] || fail 're-running configure-floorp.sh duplicated SSB records'
-)
-
 test_desktop_firmware_check_refreshes_then_lists_updates() (
   mock_bin="$test_root/firmware-bin"
   command_log="$test_root/firmware-commands"
@@ -728,9 +630,6 @@ test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_dotfile_setup_migrates_running_mako_to_swaync
 test_dotfile_setup_preserves_personal_mako_config
 test_dotfile_setup_restarts_running_hypridle
-test_configure_floorp_creates_every_launcher
-test_configure_floorp_fails_without_work_container
-test_configure_floorp_is_idempotent
 test_desktop_firmware_check_refreshes_then_lists_updates
 test_desktop_firmware_rejects_unknown_action
 test_windows_vm_render_writes_loopback_compose

@@ -30,12 +30,37 @@ required_helpers=(
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
   monitor-scale terminal-cwd touchpad-toggle tui-launch
   power-profile-cycle storage-status
-  webapp-launch window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
+  window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
   reminder reminder-set weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do
   [[ -x $root/dotfiles/bin/.local/bin/$helper ]] || { echo "Missing helper: $helper" >&2; exit 1; }
 done
+
+for legacy_helper in webapp-launch gmail-handler; do
+  [[ ! -e $root/dotfiles/bin/.local/bin/$legacy_helper ]] || { echo "Legacy helper remains: $legacy_helper" >&2; exit 1; }
+done
+
+for scheme in http https mailto; do
+  grep -qF "xdg-mime default floorp.desktop x-scheme-handler/$scheme" "$root/scripts/configure-user.sh" || {
+    echo "Floorp is not the default $scheme handler" >&2
+    exit 1
+  }
+done
+
+if grep -qF 'webapp-launch' "$root/dotfiles/hypr/.config/hypr/bindings.lua"; then
+  echo "Legacy web-app keybinding remains" >&2
+  exit 1
+fi
+
+grep -qF 'floorp --new-tab http://127.0.0.1:4533/' "$root/scripts/configure-user.sh" || {
+  echo "Normal Floorp Navidrome launcher is missing" >&2
+  exit 1
+}
+grep -qF 'SUPER + SHIFT + M' "$root/dotfiles/hypr/.config/hypr/bindings.lua" || {
+  echo "Navidrome keybinding is missing" >&2
+  exit 1
+}
 
 for test_script in run.sh static.sh behavior.sh vm.sh vm-guest.sh; do
   [[ -x $root/tests/$test_script ]] || { echo "Test script is not executable: $test_script" >&2; exit 1; }

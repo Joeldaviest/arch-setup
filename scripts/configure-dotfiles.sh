@@ -33,6 +33,19 @@ remove_legacy_mako_link "$HOME/.config/mako/config"
 remove_legacy_mako_link "$HOME/.config/mako"
 rmdir "$HOME/.config/mako" 2>/dev/null || true
 
+remove_legacy_helper_link() {
+  local helper=$1 path target
+  path="$HOME/.local/bin/$helper"
+  [[ -L $path ]] || return 0
+  target=$(realpath -m -- "$(dirname -- "$path")/$(readlink -- "$path")")
+  [[ $target == "$SETUP_ROOT/dotfiles/bin/.local/bin/$helper" ]] || return 0
+  rm -f -- "$path"
+  note "Removed legacy helper link $path"
+}
+
+remove_legacy_helper_link webapp-launch
+remove_legacy_helper_link gmail-handler
+
 backup_conflicts() {
   local package=$1 source_file relative target backup
   while IFS= read -r -d '' source_file; do

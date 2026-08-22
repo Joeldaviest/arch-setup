@@ -1,12 +1,9 @@
 -- Application bindings
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd("uwsm-app -- nautilus --new-window"), { description = "File manager" })
-hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("webapp-launch navidrome"), { description = "Music" })
+hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("uwsm-app -- floorp --new-tab http://127.0.0.1:4533/"), { description = "Music" })
 hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("desktop-editor"), { description = "VSCodium" })
 hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("tui-launch lazydocker"), { description = "Docker" })
 hl.bind("SUPER + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm-app -- bitwarden"), { description = "Passwords" })
-
-hl.bind("SUPER + SHIFT + Y", hl.dsp.exec_cmd("webapp-launch youtube"), { description = "YouTube" })
-hl.bind("SUPER + SHIFT + ALT + G", hl.dsp.exec_cmd("webapp-launch whatsapp"), { description = "WhatsApp" })
 
 hl.bind(
   "SUPER + T",

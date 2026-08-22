@@ -42,5 +42,3 @@ install_packages
 
 success "Setup complete"
 note "Log out and back in (or reboot) before starting the Hyprland session."
-note "Launch Floorp, sign into Firefox Sync, quit Floorp, then run ./scripts/configure-floorp.sh"
-
