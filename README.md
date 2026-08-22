@@ -93,12 +93,13 @@ in the background. Run `desktop-firmware check` to list pending updates or
 (`SUPER+SHIFT+E`).
 
 The waybar weather module (`weather-status`) auto-detects location by IP via
-wttr.in. To pin it to a specific city, write the city name to
-`~/.config/weather-status/location` (e.g. `echo "London" >
-~/.config/weather-status/location`). The bar shows only the current
-temperature; hover for conditions and a short forecast, or click it for the
-detailed forecast. Successful responses are cached for 15 minutes and remain
-available when a refresh temporarily fails.
+wttr.in. The bar shows only the current temperature; hover for conditions and
+a short forecast, left-click for the detailed forecast, or right-click to pick
+an exact location. The picker searches Open-Meteo's worldwide geocoder, keeps
+recent choices, and can restore automatic IP detection. It stores precise
+coordinates under `~/.config/weather-status/`, so unusual ISP routing does not
+affect a selected location. Successful responses are cached for 15 minutes and
+remain available when a refresh temporarily fails.
 
 ## Windows VM
 

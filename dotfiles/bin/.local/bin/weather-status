@@ -6,6 +6,7 @@ cache_dir=${WEATHER_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/weather-status}
 cache_file="$cache_dir/weather.json"
 cache_location_file="$cache_dir/location"
 location_file=${WEATHER_LOCATION_FILE:-$HOME/.config/weather-status/location}
+location_label_file=${WEATHER_LOCATION_LABEL_FILE:-$HOME/.config/weather-status/location-label}
 cache_max_age=${WEATHER_CACHE_MAX_AGE:-900}
 
 case $mode in
@@ -17,6 +18,9 @@ location=""
 [[ -s $location_file ]] && location=$(<"$location_file")
 location=${location//$'\r'/}
 query_location=${location// /+}
+configured_label=""
+[[ -s $location_label_file ]] && configured_label=$(<"$location_label_file")
+configured_label=${configured_label//$'\r'/}
 
 mkdir -p "$cache_dir"
 
@@ -57,15 +61,17 @@ fi
 
 temperature=$(jq -r '.current_condition[0].temp_C + "°C"' "$cache_file")
 
-tooltip=$(jq -r '
+tooltip=$(jq -r --arg configured_label "$configured_label" '
   .current_condition[0] as $current |
   .nearest_area[0] as $area |
   .weather[0] as $today |
   .weather[1] as $tomorrow |
   def area_name:
+    if $configured_label != "" then $configured_label else
     ($area.areaName[0].value // "Current location") as $name |
     ($area.region[0].value // "") as $region |
-    if $region == "" or $region == $name then $name else "\($name), \($region)" end;
+    if $region == "" or $region == $name then $name else "\($name), \($region)" end
+    end;
   def rain($day):
     ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
   [
@@ -74,7 +80,7 @@ tooltip=$(jq -r '
     "Humidity \($current.humidity)% · Wind \($current.winddir16Point) \($current.windspeedKmph) km/h",
     "Today \($today.mintempC)–\($today.maxtempC)°C · rain \(rain($today))%",
     (if $tomorrow then "Tomorrow \($tomorrow.mintempC)–\($tomorrow.maxtempC)°C · rain \(rain($tomorrow))%" else empty end)
-  ] | join("\n")
+  ] | join("\n") + "\n\nLeft click: details · Right click: change location"
 ' "$cache_file")
 
 if $stale; then
@@ -92,15 +98,17 @@ case $mode in
     printf '%s\n' "$temperature"
     ;;
   --detail)
-    jq -r '
+    jq -r --arg configured_label "$configured_label" '
       .current_condition[0] as $current |
       .nearest_area[0] as $area |
       .weather[0] as $today |
       .weather[1] as $tomorrow |
       def area_name:
+        if $configured_label != "" then $configured_label else
         ($area.areaName[0].value // "Current location") as $name |
         ($area.region[0].value // "") as $region |
-        if $region == "" or $region == $name then $name else "\($name), \($region)" end;
+        if $region == "" or $region == $name then $name else "\($name), \($region)" end
+        end;
       def rain($day):
         ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
       def day($label; $value):

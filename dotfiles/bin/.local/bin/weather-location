@@ -1,0 +1,117 @@
+#!/bin/bash
+set -euo pipefail
+
+config_dir=${WEATHER_CONFIG_DIR:-$HOME/.config/weather-status}
+location_file=${WEATHER_LOCATION_FILE:-$config_dir/location}
+location_label_file=${WEATHER_LOCATION_LABEL_FILE:-$config_dir/location-label}
+recent_file=${WEATHER_RECENT_FILE:-$config_dir/recent-locations.tsv}
+picker=${WEATHER_PICKER_COMMAND:-walker}
+
+search_action='Search for a city or postcode…'
+automatic_action='Automatic location (IP)'
+
+notify_error() {
+  notify-send -u critical 'Weather location' "$1"
+}
+
+refresh_weather() {
+  pkill -RTMIN+8 -x waybar 2>/dev/null || true
+}
+
+save_location() {
+  local label=$1 latitude=$2 longitude=$3 location_tmp label_tmp recent_tmp
+  mkdir -p "$config_dir"
+
+  location_tmp=$(mktemp "$config_dir/location.XXXXXX")
+  label_tmp=$(mktemp "$config_dir/location-label.XXXXXX")
+  printf '~%s,%s\n' "$latitude" "$longitude" >"$location_tmp"
+  printf '%s\n' "$label" >"$label_tmp"
+  mv -f "$location_tmp" "$location_file"
+  mv -f "$label_tmp" "$location_label_file"
+
+  recent_tmp=$(mktemp "$config_dir/recent-locations.XXXXXX")
+  {
+    printf '%s\t%s\t%s\n' "$label" "$latitude" "$longitude"
+    if [[ -f $recent_file ]]; then
+      cat "$recent_file"
+    fi
+  } | awk -F '\t' 'NF >= 3 && !seen[$2 FS $3]++ && count++ < 8' >"$recent_tmp"
+  mv -f "$recent_tmp" "$recent_file"
+
+  notify-send -u low 'Weather location' "$label"
+  refresh_weather
+}
+
+if ! command -v "$picker" >/dev/null 2>&1; then
+  notify_error 'Walker is unavailable'
+  exit 1
+fi
+
+menu_selection=$(
+  {
+    printf '%s\n%s\n' "$search_action" "$automatic_action"
+    if [[ -f $recent_file ]]; then
+      awk -F '\t' 'NF >= 3 { print "Recent · " $1 }' "$recent_file"
+    fi
+  } | "$picker" --dmenu -p 'Weather location'
+) || exit 0
+
+if [[ $menu_selection == "$automatic_action" ]]; then
+  rm -f -- "$location_file" "$location_label_file"
+  notify-send -u low 'Weather location' 'Automatic location (IP)'
+  refresh_weather
+  exit 0
+elif [[ $menu_selection == 'Recent · '* ]]; then
+  recent_label=${menu_selection#Recent · }
+  recent_record=$(awk -F '\t' -v label="$recent_label" '$1 == label { print; exit }' "$recent_file")
+  [[ -n $recent_record ]] || exit 0
+  IFS=$'\t' read -r label latitude longitude <<<"$recent_record"
+  save_location "$label" "$latitude" "$longitude"
+  exit 0
+elif [[ $menu_selection != "$search_action" ]]; then
+  exit 0
+fi
+
+query=$(printf '' | "$picker" --dmenu --inputonly -p 'City or postcode') || exit 0
+query=${query//$'\r'/}
+query=${query//$'\n'/ }
+[[ $query =~ [^[:space:]] ]] || exit 0
+
+response=$(mktemp)
+results=$(mktemp)
+trap 'rm -f -- "$response" "$results"' EXIT
+
+if ! curl -A 'arch-setup-weather/1.0' -fsS --max-time 8 -G \
+    'https://geocoding-api.open-meteo.com/v1/search' \
+    --data-urlencode "name=$query" --data 'count=20' --data 'language=en' \
+    --data 'format=json' >"$response"; then
+  notify_error 'Location search failed'
+  exit 1
+fi
+
+jq -r '
+  def clean: tostring | gsub("[\\t\\r\\n]"; " ");
+  (.results // [])[] |
+  (.name | clean) as $name |
+  (.admin1 // "" | clean) as $region |
+  (.country // "" | clean) as $country |
+  ([
+    $name,
+    (if $region != "" and $region != $name then $region else empty end),
+    (if $country != "" then $country else empty end)
+  ] | join(", ")) as $label |
+  (.latitude | tostring) as $latitude |
+  (.longitude | tostring) as $longitude |
+  ["\($label)  ·  \($latitude), \($longitude)", $latitude, $longitude, $label] | @tsv
+' "$response" >"$results"
+
+if [[ ! -s $results ]]; then
+  notify_error "No locations found for $query"
+  exit 0
+fi
+
+result_selection=$(cut -f1 "$results" | "$picker" --dmenu -p 'Choose weather location') || exit 0
+record=$(awk -F '\t' -v display="$result_selection" '$1 == display { print; exit }' "$results")
+[[ -n $record ]] || exit 0
+IFS=$'\t' read -r _ latitude longitude label <<<"$record"
+save_location "$label" "$latitude" "$longitude"

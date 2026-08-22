@@ -272,6 +272,7 @@ test_weather_status_uses_rich_cached_conditions() (
   curl_log="$test_root/weather-curl.log"
   mkdir -p "$test_home/.config/weather-status" "$mock_bin"
   printf 'Bengaluru\n' >"$test_home/.config/weather-status/location"
+  printf 'Selected Bengaluru, India\n' >"$test_home/.config/weather-status/location-label"
 
   cat >"$fixture" <<'EOF'
 {
@@ -313,7 +314,7 @@ EOF
     PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --json)
   jq -e '
     .text == "27°C" and .class == "normal" and
-    (.tooltip | contains("Bengaluru, Karnataka") and contains("Partly cloudy") and
+    (.tooltip | contains("Selected Bengaluru, India") and contains("Partly cloudy") and
       contains("feels like 29°C") and contains("Today 21–31°C") and
       contains("Tomorrow 22–30°C"))
   ' <<<"$weather_json" >/dev/null || fail 'weather-status did not build the compact rich Waybar output'
@@ -321,7 +322,7 @@ EOF
   detail=$(HOME="$test_home" WEATHER_CACHE_DIR="$cache_dir" \
     WEATHER_FIXTURE="$fixture" WEATHER_CURL_LOG="$curl_log" \
     PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --detail)
-  [[ $detail == *'Weather · Bengaluru, Karnataka'* && $detail == *'UV index     6'* && \
+  [[ $detail == *'Weather · Selected Bengaluru, India'* && $detail == *'UV index     6'* && \
      $detail == *'Sunrise      06:05 AM'* ]] || fail 'weather-status detail view omitted forecast data'
   [[ $(wc -l <"$curl_log") == 1 ]] || fail 'weather-status ignored its fresh cache'
 
@@ -337,6 +338,71 @@ EOF
     PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --json)
   jq -e '.text == "--°C" and .class == "unavailable"' <<<"$unavailable" >/dev/null || \
     fail 'weather-status did not report an unavailable uncached forecast'
+)
+
+test_weather_location_searches_and_selects_coordinates() (
+  test_home="$test_root/weather-location-home"
+  mock_bin="$test_root/weather-location-bin"
+  picker_log="$test_root/weather-location-picker.log"
+  curl_log="$test_root/weather-location-curl.log"
+  signal_log="$test_root/weather-location-signal.log"
+  mkdir -p "$test_home" "$mock_bin"
+
+  cat >"$mock_bin/walker" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$WEATHER_PICKER_LOG"
+cat >/dev/null
+if [[ ${WEATHER_PICKER_MODE:-search} == automatic ]]; then
+  printf 'Automatic location (IP)\n'
+elif [[ " $* " == *' --inputonly '* ]]; then
+  printf 'Kochi\n'
+elif [[ $* == *'Choose weather location'* ]]; then
+  printf 'Kochi, Kerala, India  ·  9.9312, 76.2673\n'
+else
+  printf 'Search for a city or postcode…\n'
+fi
+EOF
+  cat >"$mock_bin/curl" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$WEATHER_LOCATION_CURL_LOG"
+cat <<'JSON'
+{"results":[
+  {"name":"Kochi","admin1":"Kerala","country":"India","latitude":9.9312,"longitude":76.2673},
+  {"name":"Kochi","admin1":"Shikoku","country":"Japan","latitude":33.56,"longitude":133.53}
+]}
+JSON
+EOF
+  cat >"$mock_bin/notify-send" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+  cat >"$mock_bin/pkill" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$WEATHER_SIGNAL_LOG"
+EOF
+  chmod +x "$mock_bin"/*
+
+  HOME="$test_home" WEATHER_PICKER_COMMAND="$mock_bin/walker" \
+    WEATHER_PICKER_LOG="$picker_log" WEATHER_LOCATION_CURL_LOG="$curl_log" \
+    WEATHER_SIGNAL_LOG="$signal_log" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/weather-location"
+
+  config_dir="$test_home/.config/weather-status"
+  [[ $(<"$config_dir/location") == '~9.9312,76.2673' ]] || \
+    fail 'weather-location did not save the selected coordinates'
+  [[ $(<"$config_dir/location-label") == 'Kochi, Kerala, India' ]] || \
+    fail 'weather-location did not save the selected display label'
+  grep -qxF $'Kochi, Kerala, India\t9.9312\t76.2673' "$config_dir/recent-locations.tsv" || \
+    fail 'weather-location did not remember the selected location'
+  [[ $(wc -l <"$picker_log") == 3 ]] || fail 'weather-location did not run its three picker stages'
+  grep -qF 'name=Kochi' "$curl_log" || fail 'weather-location did not search for the entered city'
+  grep -qxF -- '-RTMIN+8 -x waybar' "$signal_log" || fail 'weather-location did not refresh Waybar'
+
+  HOME="$test_home" WEATHER_PICKER_COMMAND="$mock_bin/walker" WEATHER_PICKER_MODE=automatic \
+    WEATHER_PICKER_LOG="$picker_log" WEATHER_SIGNAL_LOG="$signal_log" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/weather-location"
+  [[ ! -e $config_dir/location && ! -e $config_dir/location-label ]] || \
+    fail 'weather-location did not restore automatic IP detection'
 )
 
 test_idle_suspend_is_laptop_only() (
@@ -698,6 +764,7 @@ test_wallpaper_start
 test_wallpaper_apply_recovers_daemon_and_preserves_fallback
 test_wallpaper_select_previews_and_applies_safely
 test_weather_status_uses_rich_cached_conditions
+test_weather_location_searches_and_selects_coordinates
 test_idle_suspend_is_laptop_only
 test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap

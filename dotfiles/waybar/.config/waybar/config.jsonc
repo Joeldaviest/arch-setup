@@ -52,8 +52,10 @@
     "exec": "weather-status --json",
     "return-type": "json",
     "interval": 900,
+    "signal": 8,
     "tooltip": true,
-    "on-click": "tui-launch --size 68x24 bash -lc 'weather-status --detail; printf \"\\nPress any key to close...\"; read -rsn1'"
+    "on-click": "tui-launch --size 68x24 bash -lc 'weather-status --detail; printf \"\\nPress any key to close...\"; read -rsn1'",
+    "on-click-right": "weather-location"
   },
   "custom/screenrecording": {
     "exec": "screenrecord-status",

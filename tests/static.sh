@@ -31,7 +31,7 @@ required_helpers=(
   monitor-scale terminal-cwd touchpad-toggle tui-launch
   power-profile-cycle storage-status
   window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
-  reminder reminder-set weather-status wallpaper-select wallpaper-start
+  reminder reminder-set weather-location weather-status wallpaper-select wallpaper-start
 )
 for helper in "${required_helpers[@]}"; do
   [[ -x $root/dotfiles/bin/.local/bin/$helper ]] || { echo "Missing helper: $helper" >&2; exit 1; }
@@ -96,7 +96,9 @@ jq -e '
   (.clock["tooltip-format"] | contains("{:%A, %d %B %Y}") and contains("{calendar}")) and
   (."custom/weather".exec == "weather-status --json") and
   (."custom/weather".interval == 900) and
+  (."custom/weather".signal == 8) and
   (."custom/weather"["on-click"] | contains("weather-status --detail") and contains("read -rsn1")) and
+  (."custom/weather"["on-click-right"] == "weather-location") and
   (.mpris.format == "{player_icon} {status_icon}") and
   (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
   (."power-profiles-daemon".format == "{icon}") and
