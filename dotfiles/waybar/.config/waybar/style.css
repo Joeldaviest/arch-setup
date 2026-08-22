@@ -39,10 +39,10 @@
 }
 
 #workspaces button.urgent {
-  color: #f7768e;
+  background-color: #f7768e;
+  color: @foreground;
   font-weight: bold;
   opacity: 1;
-  box-shadow: inset 0 -2px #f7768e;
 }
 
 #cpu,
