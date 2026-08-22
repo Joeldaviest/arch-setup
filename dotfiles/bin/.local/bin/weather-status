@@ -1,15 +1,125 @@
 #!/bin/bash
 set -euo pipefail
-format=${1:-text}
 
-location_file="$HOME/.config/weather-status/location"
+mode=${1:---text}
+cache_dir=${WEATHER_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/weather-status}
+cache_file="$cache_dir/weather.json"
+cache_location_file="$cache_dir/location"
+location_file=${WEATHER_LOCATION_FILE:-$HOME/.config/weather-status/location}
+cache_max_age=${WEATHER_CACHE_MAX_AGE:-900}
+
+case $mode in
+  --json|--text|--detail) ;;
+  *) printf 'Usage: weather-status [--json|--text|--detail]\n' >&2; exit 2 ;;
+esac
+
 location=""
 [[ -s $location_file ]] && location=$(<"$location_file")
-location=${location// /+}
+location=${location//$'\r'/}
+query_location=${location// /+}
 
-weather=$(curl -fsS --max-time 5 "https://wttr.in/${location}?format=%c+%t+%C" 2>/dev/null) || weather='Weather unavailable'
-if [[ $format == "--json" ]]; then
-  jq -cn --arg text "$weather" '{text:$text,tooltip:$text}'
-else
-  printf '%s\n' "$weather"
+mkdir -p "$cache_dir"
+
+cache_matches_location() {
+  [[ -s $cache_file && -f $cache_location_file ]] || return 1
+  [[ $(<"$cache_location_file") == "$location" ]] || return 1
+  jq -e '.current_condition[0].temp_C and .weather[0]' "$cache_file" >/dev/null 2>&1
+}
+
+cache_is_fresh() {
+  cache_matches_location || return 1
+  [[ $cache_max_age =~ ^[0-9]+$ ]] || return 1
+  modified=$(stat -c %Y "$cache_file" 2>/dev/null) || return 1
+  (( $(date +%s) - modified < cache_max_age ))
+}
+
+stale=false
+if ! cache_is_fresh; then
+  download=$(mktemp "$cache_dir/weather.json.XXXXXX")
+  if curl -A 'arch-setup-weather/1.0' -fsS --max-time 8 \
+      "https://wttr.in/${query_location}?format=j1" >"$download" 2>/dev/null &&
+      jq -e '.current_condition[0].temp_C and .weather[0]' "$download" >/dev/null 2>&1; then
+    mv -f "$download" "$cache_file"
+    printf '%s' "$location" >"$cache_location_file"
+  else
+    rm -f "$download"
+    cache_matches_location && stale=true
+  fi
 fi
+
+if ! cache_matches_location; then
+  case $mode in
+    --json) jq -cn '{text:"--°C", tooltip:"Weather unavailable", class:"unavailable"}' ;;
+    *) printf 'Weather unavailable\n' ;;
+  esac
+  exit 0
+fi
+
+temperature=$(jq -r '.current_condition[0].temp_C + "°C"' "$cache_file")
+
+tooltip=$(jq -r '
+  .current_condition[0] as $current |
+  .nearest_area[0] as $area |
+  .weather[0] as $today |
+  .weather[1] as $tomorrow |
+  def area_name:
+    ($area.areaName[0].value // "Current location") as $name |
+    ($area.region[0].value // "") as $region |
+    if $region == "" or $region == $name then $name else "\($name), \($region)" end;
+  def rain($day):
+    ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
+  [
+    area_name,
+    "\($current.weatherDesc[0].value // "Unknown") · \($current.temp_C)°C · feels like \($current.FeelsLikeC)°C",
+    "Humidity \($current.humidity)% · Wind \($current.winddir16Point) \($current.windspeedKmph) km/h",
+    "Today \($today.mintempC)–\($today.maxtempC)°C · rain \(rain($today))%",
+    (if $tomorrow then "Tomorrow \($tomorrow.mintempC)–\($tomorrow.maxtempC)°C · rain \(rain($tomorrow))%" else empty end)
+  ] | join("\n")
+' "$cache_file")
+
+if $stale; then
+  tooltip+=$'\nCached conditions · update unavailable'
+fi
+
+case $mode in
+  --json)
+    class=normal
+    $stale && class=stale
+    jq -cn --arg text "$temperature" --arg tooltip "$tooltip" --arg class "$class" \
+      '{text:$text, tooltip:$tooltip, class:$class}'
+    ;;
+  --text)
+    printf '%s\n' "$temperature"
+    ;;
+  --detail)
+    jq -r '
+      .current_condition[0] as $current |
+      .nearest_area[0] as $area |
+      .weather[0] as $today |
+      .weather[1] as $tomorrow |
+      def area_name:
+        ($area.areaName[0].value // "Current location") as $name |
+        ($area.region[0].value // "") as $region |
+        if $region == "" or $region == $name then $name else "\($name), \($region)" end;
+      def rain($day):
+        ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
+      def day($label; $value):
+        if $value then
+          "\($label)\n  Temperature  \($value.mintempC)–\($value.maxtempC)°C\n  Rain chance  \(rain($value))%\n  Sunrise      \($value.astronomy[0].sunrise // "—")\n  Sunset       \($value.astronomy[0].sunset // "—")"
+        else empty end;
+      "Weather · \(area_name)\n\n" +
+      "Current\n" +
+      "  Conditions   \($current.weatherDesc[0].value // "Unknown")\n" +
+      "  Temperature  \($current.temp_C)°C\n" +
+      "  Feels like   \($current.FeelsLikeC)°C\n" +
+      "  Humidity     \($current.humidity)%\n" +
+      "  Wind         \($current.winddir16Point) \($current.windspeedKmph) km/h\n" +
+      "  Visibility   \($current.visibility // "—") km\n" +
+      "  UV index     \($current.uvIndex // "—")\n\n" +
+      day("Today"; $today) + "\n\n" + day("Tomorrow"; $tomorrow)
+    ' "$cache_file"
+    if $stale; then
+      printf '\n\nCached conditions · update unavailable\n'
+    fi
+    ;;
+esac

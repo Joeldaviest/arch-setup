@@ -264,6 +264,81 @@ LUA
   fi
 )
 
+test_weather_status_uses_rich_cached_conditions() (
+  test_home="$test_root/weather-home"
+  mock_bin="$test_root/weather-bin"
+  cache_dir="$test_root/weather-cache"
+  fixture="$test_root/weather.json"
+  curl_log="$test_root/weather-curl.log"
+  mkdir -p "$test_home/.config/weather-status" "$mock_bin"
+  printf 'Bengaluru\n' >"$test_home/.config/weather-status/location"
+
+  cat >"$fixture" <<'EOF'
+{
+  "current_condition": [{
+    "temp_C": "27", "FeelsLikeC": "29", "humidity": "71",
+    "weatherDesc": [{"value": "Partly cloudy"}], "winddir16Point": "SW",
+    "windspeedKmph": "12", "visibility": "10", "uvIndex": "6"
+  }],
+  "nearest_area": [{
+    "areaName": [{"value": "Bengaluru"}], "region": [{"value": "Karnataka"}]
+  }],
+  "weather": [
+    {
+      "mintempC": "21", "maxtempC": "31",
+      "hourly": [{"chanceofrain": "20"}, {"chanceofrain": "35"}],
+      "astronomy": [{"sunrise": "06:05 AM", "sunset": "06:42 PM"}]
+    },
+    {
+      "mintempC": "22", "maxtempC": "30",
+      "hourly": [{"chanceofrain": "45"}],
+      "astronomy": [{"sunrise": "06:05 AM", "sunset": "06:41 PM"}]
+    }
+  ]
+}
+EOF
+
+  cat >"$mock_bin/curl" <<'EOF'
+#!/bin/bash
+printf 'curl\n' >>"$WEATHER_CURL_LOG"
+if [[ ${WEATHER_CURL_FAIL:-0} == 1 ]]; then
+  exit 22
+fi
+cat "$WEATHER_FIXTURE"
+EOF
+  chmod +x "$mock_bin/curl"
+
+  weather_json=$(HOME="$test_home" WEATHER_CACHE_DIR="$cache_dir" \
+    WEATHER_FIXTURE="$fixture" WEATHER_CURL_LOG="$curl_log" \
+    PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --json)
+  jq -e '
+    .text == "27°C" and .class == "normal" and
+    (.tooltip | contains("Bengaluru, Karnataka") and contains("Partly cloudy") and
+      contains("feels like 29°C") and contains("Today 21–31°C") and
+      contains("Tomorrow 22–30°C"))
+  ' <<<"$weather_json" >/dev/null || fail 'weather-status did not build the compact rich Waybar output'
+
+  detail=$(HOME="$test_home" WEATHER_CACHE_DIR="$cache_dir" \
+    WEATHER_FIXTURE="$fixture" WEATHER_CURL_LOG="$curl_log" \
+    PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --detail)
+  [[ $detail == *'Weather · Bengaluru, Karnataka'* && $detail == *'UV index     6'* && \
+     $detail == *'Sunrise      06:05 AM'* ]] || fail 'weather-status detail view omitted forecast data'
+  [[ $(wc -l <"$curl_log") == 1 ]] || fail 'weather-status ignored its fresh cache'
+
+  stale_json=$(HOME="$test_home" WEATHER_CACHE_DIR="$cache_dir" WEATHER_CACHE_MAX_AGE=0 \
+    WEATHER_CURL_FAIL=1 WEATHER_FIXTURE="$fixture" WEATHER_CURL_LOG="$curl_log" \
+    PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --json)
+  jq -e '.text == "27°C" and .class == "stale" and (.tooltip | contains("Cached conditions"))' \
+    <<<"$stale_json" >/dev/null || fail 'weather-status did not retain stale cached conditions'
+
+  empty_cache="$test_root/weather-empty-cache"
+  unavailable=$(HOME="$test_home" WEATHER_CACHE_DIR="$empty_cache" WEATHER_CACHE_MAX_AGE=0 \
+    WEATHER_CURL_FAIL=1 WEATHER_FIXTURE="$fixture" WEATHER_CURL_LOG="$curl_log" \
+    PATH="$mock_bin:$PATH" "$root/dotfiles/bin/.local/bin/weather-status" --json)
+  jq -e '.text == "--°C" and .class == "unavailable"' <<<"$unavailable" >/dev/null || \
+    fail 'weather-status did not report an unavailable uncached forecast'
+)
+
 test_idle_suspend_is_laptop_only() (
   mock_bin="$test_root/idle-suspend-bin"
   power_dir="$test_root/idle-power-supplies"
@@ -622,6 +697,7 @@ test_install_includes_multilib_manifest
 test_wallpaper_start
 test_wallpaper_apply_recovers_daemon_and_preserves_fallback
 test_wallpaper_select_previews_and_applies_safely
+test_weather_status_uses_rich_cached_conditions
 test_idle_suspend_is_laptop_only
 test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap

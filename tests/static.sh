@@ -94,6 +94,9 @@ jq -e '
   (.clock.format == "{:%I:%M %p}") and
   (.clock | has("format-alt") | not) and
   (.clock["tooltip-format"] | contains("{:%A, %d %B %Y}") and contains("{calendar}")) and
+  (."custom/weather".exec == "weather-status --json") and
+  (."custom/weather".interval == 900) and
+  (."custom/weather"["on-click"] | contains("weather-status --detail") and contains("read -rsn1")) and
   (.mpris.format == "{player_icon} {status_icon}") and
   (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
   (."power-profiles-daemon".format == "{icon}") and
