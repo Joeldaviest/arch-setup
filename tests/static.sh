@@ -76,6 +76,7 @@ setup_line=$(grep -nF "TERM=xterm-256color ./setup.sh' 2>&1" "$root/tests/vm.sh"
 }
 
 waybar_config="$root/dotfiles/waybar/.config/waybar/config.jsonc"
+waybar_style="$root/dotfiles/waybar/.config/waybar/style.css"
 jq empty "$waybar_config"
 jq -e '
   ."modules-left" == ["hyprland/workspaces"] and
@@ -103,6 +104,9 @@ jq -e '
   (.idle_inhibitor.timeout == 120) and
   (.idle_inhibitor["tooltip-format-activated"] | contains("dimming") and contains("suspend"))
 ' --argjson config "$(jq . "$waybar_config")" "$waybar_config" >/dev/null
+grep -qF '#workspaces button.urgent {' "$waybar_style"
+grep -A5 -F '#workspaces button.urgent {' "$waybar_style" | grep -qF 'color: #f7768e;'
+grep -qF 'focus_on_activate = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '
   .widgets == ["title", "dnd", "notifications"] and
