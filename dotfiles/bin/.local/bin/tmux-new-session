@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+target_args=()
+[[ -n ${TMUX_PANE:-} ]] && target_args=(-t "$TMUX_PANE")
+current_dir=$(tmux display-message -p "${target_args[@]}" '#{pane_current_path}')
+directory_name=${current_dir##*/}
+session_name=$(sed -E 's/[^[:alnum:]_-]+/-/g; s/^-+//; s/-+$//' <<<"$directory_name")
+[[ -n $session_name ]] || session_name=Work
+
+candidate=$session_name
+suffix=2
+while tmux has-session -t "=$candidate" 2>/dev/null; do
+  candidate="${session_name}-${suffix}"
+  ((suffix += 1))
+done
+
+tmux new-session -d -s "$candidate" -c "$current_dir"
+tmux switch-client -t "$candidate"

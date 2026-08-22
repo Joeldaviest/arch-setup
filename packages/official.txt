@@ -101,7 +101,6 @@ gum
 fastfetch
 lazydocker
 github-cli
-mise
 uv
 docker
 docker-compose

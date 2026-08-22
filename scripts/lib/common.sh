@@ -34,7 +34,7 @@ check_host() {
 }
 
 check_repository() {
-  local required=(setup.sh packages/official.txt packages/multilib.txt packages/aur-preinstall.txt packages/aur.txt packages/npm.txt scripts/configure-dotfiles.sh scripts/configure-system.sh system/20-wired.network)
+  local required=(setup.sh packages/official.txt packages/multilib.txt packages/aur-preinstall.txt packages/aur.txt scripts/configure-dotfiles.sh scripts/configure-system.sh system/20-wired.network)
   local path
   for path in "${required[@]}"; do
     [[ -f $SETUP_ROOT/$path ]] || die "Missing repository file: $path"

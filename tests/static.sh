@@ -28,7 +28,7 @@ required_helpers=(
   audio-input-mute audio-output-switch desktop-audio desktop-bluetooth desktop-browser
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
   desktop-screenshot desktop-wifi display-brightness keybindings keyboard-brightness
-  monitor-scale terminal-cwd touchpad-toggle tui-launch
+  monitor-scale terminal-cwd tmux-new-session touchpad-toggle tui-launch
   power-profile-cycle storage-status
   window-pop windows-close-all windows-vm workspace-group-toggle xdg-terminal-exec
   reminder reminder-set weather-location weather-status wallpaper-select wallpaper-start
@@ -136,6 +136,11 @@ if grep -qxF 'swaybg' "$root/packages/official.txt"; then
 fi
 grep -qxF 'mako' "$root/packages/obsolete.txt"
 grep -qxF 'swaybg' "$root/packages/obsolete.txt"
+grep -qxF 'mise' "$root/packages/obsolete.txt"
+if grep -qxF 'mise' "$root/packages/official.txt" || grep -RqsE '\bmise\b' "$root/dotfiles/zsh"; then
+  echo 'Mise remains active in the managed setup' >&2
+  exit 1
+fi
 grep -qF 'uwsm-app -- swaync' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
 if grep -qF 'uwsm-app -- mako' "$root/dotfiles/hypr/.config/hypr/autostart.lua"; then
   echo 'Mako must not remain in Hyprland autostart' >&2
@@ -246,6 +251,15 @@ tmux_config="$root/dotfiles/tmux/.config/tmux/tmux.conf"
 grep -qF 'bind -n M-t split-window -h -c "#{pane_current_path}"' "$tmux_config"
 grep -qF 'bind -n M-T split-window -v -c "#{pane_current_path}"' "$tmux_config"
 grep -qF 'bind -n M-q kill-pane' "$tmux_config"
+grep -qF 'bind -n M-h select-pane -L' "$tmux_config"
+grep -qF 'bind -n M-j select-pane -D' "$tmux_config"
+grep -qF 'bind -n M-k select-pane -U' "$tmux_config"
+grep -qF 'bind -n M-l select-pane -R' "$tmux_config"
+grep -qF 'bind C run-shell "tmux-new-session"' "$tmux_config"
+if grep -qE 'bind -n C-M-(Left|Right|Up|Down) select-pane' "$tmux_config"; then
+  echo 'Arrow-based tmux pane navigation remains configured' >&2
+  exit 1
+fi
 if grep -qE 'bind -n M-(Enter|S-Enter|Escape) ' "$tmux_config"; then
   echo 'Legacy tmux Alt pane bindings remain configured' >&2
   exit 1

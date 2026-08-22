@@ -36,11 +36,6 @@ if ! grep -qiE '(VGA|Display).*(AMD|Intel|NVIDIA)|(AMD|Intel|NVIDIA).*(VGA|Displ
   fi
 fi
 
-while IFS= read -r package; do
-  mise exec node@lts -- npm list --global --depth=0 "$package" >/dev/null 2>&1 || \
-    fail "npm package is not installed: $package"
-done < <(read_manifest "$root/packages/npm.txt")
-
 kernel_release=$(uname -r)
 [[ -e /usr/lib/modules/$kernel_release/build ]] || fail "kernel headers are missing for $kernel_release"
 find "/usr/lib/modules/$kernel_release" -type f -name 'hid-xpadneo.ko*' -print -quit | grep -q . || \

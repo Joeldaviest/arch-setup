@@ -1,3 +1,4 @@
 # Packages removed from the managed setup during upgrades
 mako
 swaybg
+mise

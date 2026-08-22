@@ -67,7 +67,7 @@ test_install_includes_multilib_manifest() (
     printf '%s\n' core extra multilib
   }
   pacman() {
-    [[ $1 == -Q && ( $2 == mako || $2 == swaybg ) ]]
+    [[ $1 == -Q && ( $2 == mako || $2 == swaybg || $2 == mise ) ]]
   }
   sudo() {
     printf '%s\n' "$*" >>"$command_log"
@@ -76,21 +76,16 @@ test_install_includes_multilib_manifest() (
     printf 'yay %s\n' "$*" >>"$command_log"
     return 0
   }
-  mise() {
-    printf 'mise %s\n' "$*" >>"$command_log"
-    return 0
-  }
-
   install_packages >/dev/null
   grep -qE '^pacman -Syu .* steam( |$)' "$command_log" || fail 'steam was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* lib32-mesa( |$)' "$command_log" || fail 'lib32-mesa was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* umu-launcher( |$)' "$command_log" || fail 'umu-launcher was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* swaync( |$)' "$command_log" || fail 'SwayNC was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* awww( |$)' "$command_log" || fail 'awww was omitted from the pacman install command'
-  grep -qxF 'pacman -R --noconfirm mako swaybg' "$command_log" || fail 'obsolete wallpaper or notification package was not removed during upgrade'
+  grep -qxF 'pacman -R --noconfirm mako swaybg mise' "$command_log" || fail 'obsolete managed packages were not removed during upgrade'
   swaync_install_line=$(grep -nE '^pacman -Syu .* swaync( |$)' "$command_log" | cut -d: -f1)
   awww_install_line=$(grep -nE '^pacman -Syu .* awww( |$)' "$command_log" | cut -d: -f1)
-  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako swaybg' "$command_log" | cut -d: -f1)
+  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako swaybg mise' "$command_log" | cut -d: -f1)
   [[ $swaync_install_line -lt $mako_remove_line ]] || fail 'Mako was removed before SwayNC was installed'
   [[ $awww_install_line -lt $mako_remove_line ]] || fail 'swaybg was removed before awww was installed'
 
@@ -516,6 +511,30 @@ test_storage_status_reports_separate_filesystems_and_swap() (
   [[ $(grep -c '^' <<<"$tooltip") == 3 ]] || fail 'storage tooltip did not render one line per storage area'
 )
 
+test_tmux_new_session_names_from_current_directory() (
+  mock_bin="$test_root/tmux-session-bin"
+  command_log="$test_root/tmux-session-commands"
+  mkdir -p "$mock_bin"
+  cat >"$mock_bin/tmux" <<'EOF'
+#!/bin/bash
+case $1 in
+  display-message) printf '%s\n' '/work/arch.setup' ;;
+  has-session) [[ ${@: -1} == '=arch-setup' ]] ;;
+  new-session|switch-client) printf '%s\n' "$*" >>"$TMUX_SESSION_LOG" ;;
+  *) exit 2 ;;
+esac
+EOF
+  chmod +x "$mock_bin/tmux"
+
+  TMUX_PANE='%7' TMUX_SESSION_LOG="$command_log" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/tmux-new-session"
+
+  grep -qxF 'new-session -d -s arch-setup-2 -c /work/arch.setup' "$command_log" || \
+    fail 'tmux-new-session did not derive a unique name from the current directory'
+  grep -qxF 'switch-client -t arch-setup-2' "$command_log" || \
+    fail 'tmux-new-session did not switch to the new session'
+)
+
 test_power_profile_cycle_sets_next_profile_and_notifies() (
   mock_bin="$test_root/power-profile-bin"
   state="$test_root/power-profile-state"
@@ -768,6 +787,7 @@ test_weather_location_searches_and_selects_coordinates
 test_idle_suspend_is_laptop_only
 test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap
+test_tmux_new_session_names_from_current_directory
 test_power_profile_cycle_sets_next_profile_and_notifies
 test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
 test_dotfile_setup_migrates_running_mako_to_swaync

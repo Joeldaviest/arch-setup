@@ -6,7 +6,6 @@ The setup has no custom binary repository.
 - `multilib.txt`: official packages that require Arch's disabled-by-default multilib repository.
 - `aur-preinstall.txt`: AUR dependency providers installed before the main AUR transaction.
 - `aur.txt`: packages resolved through the AUR RPC and installed by `yay`.
-- `npm.txt`: upstream npm command-line applications not supplied by Arch.
 - Graphics, legacy network, and kernel-header packages are selected at runtime.
 
 Notable replacements for the previous environment:

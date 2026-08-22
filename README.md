@@ -142,7 +142,7 @@ repository; setup enables it before installation. `packages/aur.txt` is
 installed with `yay`, bootstrapped from the AUR when necessary. Packages in
 `packages/aur-preinstall.txt` are installed in an earlier AUR transaction when
 they provide a dependency that yay would otherwise resolve to a conflicting
-package. npm packages are listed separately. Hardware-only packages are
+package. Hardware-only packages are
 selected at runtime.
 
 Arch is rolling release: this repository reproduces package selection and
