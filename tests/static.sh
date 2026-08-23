@@ -204,6 +204,7 @@ grep -qF 'RequiredForOnline=no' "$root/system/20-wired.network"
 grep -qF 'systemd-networkd.service' "$root/scripts/configure-system.sh"
 grep -qF 'disable systemd-networkd-wait-online.service' "$root/scripts/configure-system.sh"
 grep -qF 'fwupd-refresh.timer' "$root/scripts/configure-system.sh"
+grep -qF "powerprofilesctl configure-battery-aware --enable" "$root/scripts/configure-system.sh"
 if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
   echo 'systemd-networkd configuration must not claim Wi-Fi interfaces managed by IWD' >&2
   exit 1

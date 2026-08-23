@@ -54,6 +54,15 @@ sudo systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 sudo systemctl disable NetworkManager.service 2>/dev/null || true
 sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
+# PPD 0.30 and newer can react to charger and battery-level changes. Keep the
+# setup usable with an older package during upgrades by detecting the command.
+if LC_ALL=C powerprofilesctl --help 2>&1 | grep -qF 'configure-battery-aware'; then
+  note "Enabling battery-aware power profile changes"
+  sudo powerprofilesctl configure-battery-aware --enable
+else
+  note "Battery-aware power profiles require power-profiles-daemon 0.30 or newer"
+fi
+
 # Package installation alone must not alter an existing filesystem or boot
 # layout. Enable maintenance only when its required Btrfs state already exists.
 if [[ $(findmnt -nro FSTYPE / 2>/dev/null) == btrfs ]]; then
