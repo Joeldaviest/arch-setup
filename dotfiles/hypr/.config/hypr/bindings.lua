@@ -7,8 +7,8 @@ hl.bind("SUPER + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm-app -- bitwarden"), { des
 
 hl.bind(
   "SUPER + T",
-  hl.dsp.exec_cmd('uwsm-app -- xdg-terminal-exec --dir="$(terminal-cwd)" bash -c "tmux attach || tmux new -s Work"'),
-  { description = "Tmux" }
+  hl.dsp.exec_cmd('uwsm-app -- xdg-terminal-exec --dir="$(terminal-cwd)" bash -c "exec tmux new-session"'),
+  { description = "New tmux session" }
 )
 hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd('uwsm-app -- xdg-terminal-exec --dir="$(terminal-cwd)"'), { description = "Alacritty" })
 hl.bind("SUPER + G", hl.dsp.exec_cmd("desktop-browser"), { description = "Floorp" })
