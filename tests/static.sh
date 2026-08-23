@@ -209,6 +209,15 @@ if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
   exit 1
 fi
 
+sddm_theme="$root/system/sddm-theme/omarchy/Main.qml"
+grep -qF 'userModel.lastUser' "$sddm_theme"
+grep -qF 'userModel.count > 0' "$sddm_theme"
+grep -qF 'Qt.UserRole + 1' "$sddm_theme"
+if grep -qF 'property string currentUser: userModel.lastUser' "$sddm_theme"; then
+  echo 'SDDM theme still requires a previously remembered user' >&2
+  exit 1
+fi
+
 for protocol in udp tcp; do
   grep -qF "proto $protocol from 172.16.0.0/12 to 172.17.0.1 port 53" "$root/scripts/configure-system.sh"
   grep -qF "proto $protocol from 192.168.0.0/16 to 172.17.0.1 port 53" "$root/scripts/configure-system.sh"

@@ -7,7 +7,16 @@ Rectangle {
   height: 480
   color: "#1a1b26"
 
-  property string currentUser: userModel.lastUser
+  property string currentUser: {
+    var remembered = (userModel.lastUser || "").toString()
+    if (remembered.length > 0)
+      return remembered
+    if (userModel.count > 0) {
+      var first = userModel.data(userModel.index(0, 0), Qt.UserRole + 1)
+      return (first || "").toString()
+    }
+    return ""
+  }
   property bool loginFailed: false
   property int sessionIndex: {
     for (var i = 0; i < sessionModel.rowCount(); i++) {
