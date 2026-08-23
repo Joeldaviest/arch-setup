@@ -48,10 +48,22 @@ sudo ufw-docker install
 sudo ufw reload
 
 note "Enabling services"
-sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service fwupd-refresh.timer
+sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service fwupd-refresh.timer paccache.timer
+sudo systemctl start docker.socket
 sudo systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 sudo systemctl disable NetworkManager.service 2>/dev/null || true
 sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+# Package installation alone must not alter an existing filesystem or boot
+# layout. Enable maintenance only when its required Btrfs state already exists.
+if [[ $(findmnt -nro FSTYPE / 2>/dev/null) == btrfs ]]; then
+  sudo systemctl enable btrfs-scrub@-.timer
+  if [[ -f /etc/snapper/configs/root ]]; then
+    sudo systemctl enable snapper-cleanup.timer
+  else
+    note "Btrfs root detected; Snapper activation is deferred until the root layout is configured"
+  fi
+fi
 
 if ! grep -q 'mdns_minimal' /etc/nsswitch.conf; then
   sudo sed -i 's/^hosts:.*/hosts: mymachines mdns_minimal [NOTFOUND=return] resolve files myhostname dns/' /etc/nsswitch.conf

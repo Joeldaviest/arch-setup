@@ -4,25 +4,48 @@ declare HARDWARE_SUMMARY="generic"
 
 installed_kernel_headers() {
   local kernel
+  local found=false
   for kernel in linux linux-lts linux-zen linux-hardened; do
     if command_exists pacman && pacman -Q "$kernel" >/dev/null 2>&1; then
       printf '%s-headers\n' "$kernel"
-      return
+      found=true
     fi
   done
-  printf '%s\n' linux-headers
+  [[ $found == true ]] || printf '%s\n' linux-headers
+}
+
+add_installed_kernel_headers() {
+  local headers
+  while IFS= read -r headers; do
+    [[ -n $headers ]] && HARDWARE_PACKAGES+=("$headers")
+  done < <(installed_kernel_headers)
 }
 
 classify_hardware() {
   local pci=${ARCH_SETUP_TEST_PCI:-}
+  local cpu_vendor=${ARCH_SETUP_TEST_CPU_VENDOR:-}
   local gpu_driver_selected=false
   if [[ -z $pci ]] && command_exists lspci; then
     pci=$(lspci -nn)
   fi
+  if [[ -z $cpu_vendor && -r /proc/cpuinfo ]]; then
+    cpu_vendor=$(sed -n 's/^vendor_id[[:space:]]*: //p' /proc/cpuinfo | head -1)
+  fi
+
+  case $cpu_vendor in
+    AuthenticAMD)
+      HARDWARE_PACKAGES+=(amd-ucode)
+      HARDWARE_SUMMARY+=" AMD-CPU"
+      ;;
+    GenuineIntel)
+      HARDWARE_PACKAGES+=(intel-ucode)
+      HARDWARE_SUMMARY+=" Intel-CPU"
+      ;;
+  esac
 
   # xpadneo-dkms is part of the personal base package set, so the running
-  # kernel's headers are required even when no other DKMS hardware is found.
-  HARDWARE_PACKAGES+=("$(installed_kernel_headers)")
+  # kernels' headers are required even when no other DKMS hardware is found.
+  add_installed_kernel_headers
 
   if grep -qiE '(VGA|Display).*AMD|AMD.*(VGA|Display)' <<<"$pci"; then
     HARDWARE_PACKAGES+=(mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon)
@@ -38,11 +61,12 @@ classify_hardware() {
 
   if grep -qi nvidia <<<"$pci"; then
     if grep -i nvidia <<<"$pci" | grep -qE 'GTX (9[0-9]{2}|10[0-9]{2})|GT 10[0-9]{2}|Quadro [PM][0-9]{3,4}|Quadro GV100|MX *[0-9]+|Titan (X|Xp|V)|Tesla V100'; then
-      HARDWARE_PACKAGES+=("$(installed_kernel_headers)")
+      add_installed_kernel_headers
       HARDWARE_AUR_PACKAGES+=(nvidia-580xx-dkms nvidia-580xx-utils lib32-nvidia-580xx-utils)
       HARDWARE_SUMMARY+=" legacy-NVIDIA-GPU"
     else
-      HARDWARE_PACKAGES+=("$(installed_kernel_headers)" nvidia-open-dkms nvidia-utils lib32-nvidia-utils libva-nvidia-driver)
+      add_installed_kernel_headers
+      HARDWARE_PACKAGES+=(nvidia-open-dkms nvidia-utils lib32-nvidia-utils libva-nvidia-driver)
       HARDWARE_SUMMARY+=" NVIDIA-GPU"
     fi
     gpu_driver_selected=true
@@ -57,12 +81,13 @@ classify_hardware() {
   fi
 
   if grep -qi 'Broadcom.*Network' <<<"$pci"; then
-    HARDWARE_PACKAGES+=(broadcom-wl-dkms "$(installed_kernel_headers)")
+    HARDWARE_PACKAGES+=(broadcom-wl-dkms)
+    add_installed_kernel_headers
     HARDWARE_SUMMARY+=" Broadcom-WiFi"
   fi
 
   if grep -qi '1f0a:6801\|YT6801' <<<"$pci"; then
-    HARDWARE_PACKAGES+=("$(installed_kernel_headers)")
+    add_installed_kernel_headers
     HARDWARE_AUR_PACKAGES+=(yt6801-dkms)
     HARDWARE_SUMMARY+=" YT6801-Ethernet"
   fi

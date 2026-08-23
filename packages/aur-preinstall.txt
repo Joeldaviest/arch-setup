@@ -1,4 +1,13 @@
-# Install virtual-dependency providers before the main AUR transaction.
-# walker-bin depends on "elephant"; installing this binary provider first keeps
-# yay from also selecting and building the conflicting source elephant package.
-elephant-all-bin
+# Install the binary Elephant core before walker-bin so yay satisfies Walker's
+# virtual "elephant" dependency without selecting the conflicting source build.
+# Keep only providers referenced by the tracked Walker configuration; the "all"
+# metapackage also pulls unrelated password-manager and distro integrations.
+elephant-bin
+elephant-desktopapplications-bin
+elephant-websearch-bin
+elephant-providerlist-bin
+elephant-files-bin
+elephant-symbols-bin
+elephant-calc-bin
+elephant-clipboard-bin
+elephant-menus-bin

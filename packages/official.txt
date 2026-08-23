@@ -4,6 +4,20 @@ git
 stow
 curl
 rsync
+
+# Kernels, boot, and recovery
+linux-zen
+linux-zen-headers
+linux-lts
+linux-lts-headers
+linux-firmware
+mkinitcpio
+limine
+btrfs-progs
+snapper
+snap-pac
+pacman-contrib
+
 alacritty
 hyprland
 hypridle

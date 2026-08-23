@@ -126,6 +126,27 @@ jq -e '
 
 grep -qxF 'swaync' "$root/packages/official.txt"
 grep -qxF 'awww' "$root/packages/official.txt"
+for package in linux-zen linux-zen-headers linux-lts linux-lts-headers linux-firmware \
+  mkinitcpio limine btrfs-progs snapper snap-pac pacman-contrib; do
+  grep -qxF "$package" "$root/packages/official.txt" || {
+    echo "Missing recovery package: $package" >&2
+    exit 1
+  }
+done
+for package in elephant-bin elephant-desktopapplications-bin elephant-websearch-bin \
+  elephant-providerlist-bin elephant-files-bin elephant-symbols-bin elephant-calc-bin \
+  elephant-clipboard-bin elephant-menus-bin; do
+  grep -qxF "$package" "$root/packages/aur-preinstall.txt" || {
+    echo "Missing configured Elephant provider: $package" >&2
+    exit 1
+  }
+done
+if grep -qxF elephant-all-bin "$root/packages/aur-preinstall.txt"; then
+  echo 'The broad Elephant provider metapackage remains active' >&2
+  exit 1
+fi
+grep -qxF elephant-all-bin "$root/packages/obsolete.txt"
+grep -qxF elephant-protonpass-bin "$root/packages/obsolete.txt"
 if grep -qxF 'mako' "$root/packages/official.txt"; then
   echo 'Mako must not remain in the active package manifest' >&2
   exit 1
@@ -211,6 +232,34 @@ hardware_case 'VGA compatible controller: NVIDIA Corporation RTX 4070' Generic n
 hardware_case 'VGA compatible controller: NVIDIA Corporation GTX 1080' Generic nvidia-580xx-dkms
 hardware_case 'Ethernet controller [1f0a:6801] YT6801' Generic yt6801-dkms
 hardware_case 'VGA compatible controller: AMD/ATI Radeon' Framework qmk-hid
+
+cpu_microcode=$(ARCH_SETUP_TEST_CPU_VENDOR=GenuineIntel bash -c '
+  source "$1/scripts/lib/common.sh"
+  source "$1/scripts/lib/packages.sh"
+  source "$1/scripts/lib/hardware.sh"
+  ARCH_SETUP_TEST_CPU_VENDOR=$2
+  ARCH_SETUP_TEST_PCI="Ethernet controller: Virtio network device"
+  classify_hardware
+  printf "%s\n" "${HARDWARE_PACKAGES[@]}"
+' _ "$root" GenuineIntel)
+grep -qxF intel-ucode <<<"$cpu_microcode"
+
+dual_kernel_headers=$(bash -c '
+  source "$1/scripts/lib/common.sh"
+  source "$1/scripts/lib/packages.sh"
+  source "$1/scripts/lib/hardware.sh"
+  command_exists() { [[ $1 == pacman ]]; }
+  pacman() { [[ $1 == -Q && ( $2 == linux-zen || $2 == linux-lts ) ]]; }
+  classify_hardware
+  printf "%s\n" "${HARDWARE_PACKAGES[@]}"
+' _ "$root")
+grep -qxF linux-zen-headers <<<"$dual_kernel_headers"
+grep -qxF linux-lts-headers <<<"$dual_kernel_headers"
+
+grep -qF 'paccache.timer' "$root/scripts/configure-system.sh"
+grep -qF 'btrfs-scrub@-.timer' "$root/scripts/configure-system.sh"
+grep -qF '/etc/snapper/configs/root' "$root/scripts/configure-system.sh"
+grep -qF 'systemctl start docker.socket' "$root/scripts/configure-system.sh"
 
 grep -qF 'hl.exec_cmd("uwsm-app -- wallpaper-start")' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
 grep -qF 'awww-daemon --quiet' "$root/dotfiles/bin/.local/bin/wallpaper-start"

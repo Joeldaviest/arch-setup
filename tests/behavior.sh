@@ -89,7 +89,7 @@ test_install_includes_multilib_manifest() (
   [[ $swaync_install_line -lt $mako_remove_line ]] || fail 'Mako was removed before SwayNC was installed'
   [[ $awww_install_line -lt $mako_remove_line ]] || fail 'swaybg was removed before awww was installed'
 
-  provider_line=$(grep -nE '^yay .* elephant-all-bin( |$)' "$command_log" | cut -d: -f1)
+  provider_line=$(grep -nE '^yay .* elephant-bin( |$)' "$command_log" | cut -d: -f1)
   walker_line=$(grep -nE '^yay .* walker-bin( |$)' "$command_log" | cut -d: -f1)
   [[ -n $provider_line && -n $walker_line && $provider_line -lt $walker_line ]] || \
     fail 'Elephant binary provider was not installed before Walker'

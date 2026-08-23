@@ -3,7 +3,7 @@
 A personal, reproducible Arch Linux post-install setup for a Tokyo Night
 Hyprland desktop. It is derived from a customized Omarchy installation but is
 standalone: it does not use an Omarchy package repository, updater, menu,
-branding, migration system, ISO, or bootloader configuration.
+branding, migration system, or ISO.
 
 ## Prerequisites
 
@@ -12,8 +12,11 @@ branding, migration system, ISO, or bootloader configuration.
 - Working internet access
 - A supported kernel (`linux`, `linux-lts`, `linux-zen`, or `linux-hardened`)
 
-The setup deliberately does not change partitions, encryption, the bootloader,
-mkinitcpio, Plymouth, Snapper, or hibernation.
+The setup deliberately does not change partitions, encryption, the installed
+bootloader, mkinitcpio hooks, Plymouth, or hibernation. It installs the packages
+needed for the planned Limine, encrypted-Btrfs, and Snapper layout, but does not
+deploy Limine or create a Snapper configuration until that layout has been
+validated during the installation work.
 
 ## Usage
 
@@ -142,8 +145,14 @@ repository; setup enables it before installation. `packages/aur.txt` is
 installed with `yay`, bootstrapped from the AUR when necessary. Packages in
 `packages/aur-preinstall.txt` are installed in an earlier AUR transaction when
 they provide a dependency that yay would otherwise resolve to a conflicting
-package. Hardware-only packages are
-selected at runtime.
+package. Hardware-only packages are selected at runtime.
+
+The managed kernel set is `linux-zen` for normal use and `linux-lts` as the
+fallback. Headers for both are retained so every managed DKMS module is built
+for both kernels. Recovery packages include Limine, Btrfs tools, Snapper,
+snap-pac, and pacman-contrib. The weekly `paccache.timer` keeps the three newest
+cached package versions. On a Btrfs root, the monthly scrub timer is enabled;
+Snapper cleanup is enabled only after a valid root configuration exists.
 
 Arch is rolling release: this repository reproduces package selection and
 configuration, not historic binary versions. `./setup.sh --check` verifies that
