@@ -53,15 +53,15 @@ hl.config({
     },
 
     groupbar = {
-      font_size = 12,
+      font_size = 8,
       font_family = "monospace",
       font_weight_active = "ultraheavy",
       font_weight_inactive = "normal",
 
       indicator_height = 0,
-      indicator_gap = 5,
-      height = 22,
-      gaps_in = 5,
+      indicator_gap = 0,
+      height = 14,
+      gaps_in = 0,
       gaps_out = 0,
 
       text_color = "rgb(ffffff)",
