@@ -57,10 +57,10 @@ removed. Failed runs and logs are preserved automatically. Use
 
 The setup installs the complete package set, detects applicable graphics and
 hardware packages, backs up conflicting dotfiles, links the tracked dotfiles
-with GNU Stow, and configures services. Floorp is installed and configured as
+with GNU Stow, and configures services. Firefox is installed and configured as
 the default handler for HTTP, HTTPS, and `mailto:` links. Navidrome has a
 conventional desktop entry and `SUPER+SHIFT+M` binding that open it in a normal
-Floorp tab.
+Firefox tab.
 
 Wallpapers are copied to `~/.config/wallpapers`, so the desktop does not depend
 on the repository remaining in place. Each Hyprland session chooses a random

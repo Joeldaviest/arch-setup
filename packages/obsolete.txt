@@ -1,4 +1,6 @@
 # Packages removed from the managed setup during upgrades
+floorp-bin
+chromium
 mako
 swaybg
 mise

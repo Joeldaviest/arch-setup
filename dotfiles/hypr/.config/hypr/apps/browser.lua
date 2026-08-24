@@ -1,16 +1,16 @@
--- Floorp browser windows
+-- Firefox browser windows
 hl.window_rule({
-  match = { class = "^[fF]loorp" },
-  tag = "+floorp-browser",
+  match = { class = "^[fF]irefox" },
+  tag = "+firefox-browser",
 })
 hl.window_rule({
-  match = { tag = "floorp-browser" },
+  match = { tag = "firefox-browser" },
   tag = "-default-opacity",
 })
 
 -- Only a subtle opacity change
 hl.window_rule({
-  match = { tag = "floorp-browser" },
+  match = { tag = "firefox-browser" },
   opacity = "1.0 0.985",
 })
 

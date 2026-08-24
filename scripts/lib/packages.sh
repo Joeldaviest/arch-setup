@@ -76,7 +76,7 @@ install_packages() {
   done
   if ((${#installed_obsolete[@]})); then
     note "Removing obsolete managed packages: ${installed_obsolete[*]}"
-    sudo pacman -R --noconfirm "${installed_obsolete[@]}"
+    sudo pacman -Rns --noconfirm "${installed_obsolete[@]}"
   fi
 
   bootstrap_yay

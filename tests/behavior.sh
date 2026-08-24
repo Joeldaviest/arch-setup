@@ -67,7 +67,7 @@ test_install_includes_multilib_manifest() (
     printf '%s\n' core extra multilib
   }
   pacman() {
-    [[ $1 == -Q && ( $2 == mako || $2 == swaybg || $2 == mise ) ]]
+    [[ $1 == -Q && ( $2 == floorp-bin || $2 == chromium || $2 == mako || $2 == swaybg || $2 == mise ) ]]
   }
   sudo() {
     printf '%s\n' "$*" >>"$command_log"
@@ -82,10 +82,12 @@ test_install_includes_multilib_manifest() (
   grep -qE '^pacman -Syu .* umu-launcher( |$)' "$command_log" || fail 'umu-launcher was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* swaync( |$)' "$command_log" || fail 'SwayNC was omitted from the pacman install command'
   grep -qE '^pacman -Syu .* awww( |$)' "$command_log" || fail 'awww was omitted from the pacman install command'
-  grep -qxF 'pacman -R --noconfirm mako swaybg mise' "$command_log" || fail 'obsolete managed packages were not removed during upgrade'
+  grep -qE '^pacman -Syu .* firefox( |$)' "$command_log" || fail 'Firefox was omitted from the pacman install command'
+  obsolete_remove='pacman -Rns --noconfirm floorp-bin chromium mako swaybg mise'
+  grep -qxF "$obsolete_remove" "$command_log" || fail 'obsolete managed packages and dependencies were not removed during upgrade'
   swaync_install_line=$(grep -nE '^pacman -Syu .* swaync( |$)' "$command_log" | cut -d: -f1)
   awww_install_line=$(grep -nE '^pacman -Syu .* awww( |$)' "$command_log" | cut -d: -f1)
-  mako_remove_line=$(grep -nF 'pacman -R --noconfirm mako swaybg mise' "$command_log" | cut -d: -f1)
+  mako_remove_line=$(grep -nF "$obsolete_remove" "$command_log" | cut -d: -f1)
   [[ $swaync_install_line -lt $mako_remove_line ]] || fail 'Mako was removed before SwayNC was installed'
   [[ $awww_install_line -lt $mako_remove_line ]] || fail 'swaybg was removed before awww was installed'
 

@@ -42,25 +42,56 @@ for legacy_helper in webapp-launch gmail-handler; do
 done
 
 for scheme in http https mailto; do
-  grep -qF "xdg-mime default floorp.desktop x-scheme-handler/$scheme" "$root/scripts/configure-user.sh" || {
-    echo "Floorp is not the default $scheme handler" >&2
+  grep -qF "xdg-mime default firefox.desktop x-scheme-handler/$scheme" "$root/scripts/configure-user.sh" || {
+    echo "Firefox is not the default $scheme handler" >&2
     exit 1
   }
 done
+grep -qF 'xdg-settings set default-web-browser firefox.desktop' "$root/scripts/configure-user.sh" || {
+  echo 'Firefox is not configured as the default web browser' >&2
+  exit 1
+}
+
+grep -qxF firefox "$root/packages/official.txt" || {
+  echo 'Firefox is missing from the official package manifest' >&2
+  exit 1
+}
+if grep -qxF floorp-bin "$root/packages/aur.txt"; then
+  echo 'Floorp remains in the active AUR package manifest' >&2
+  exit 1
+fi
+grep -qxF floorp-bin "$root/packages/obsolete.txt"
+grep -qxF chromium "$root/packages/obsolete.txt"
 
 if grep -qF 'webapp-launch' "$root/dotfiles/hypr/.config/hypr/bindings.lua"; then
   echo "Legacy web-app keybinding remains" >&2
   exit 1
 fi
 
-grep -qF 'floorp --new-tab http://127.0.0.1:4533/' "$root/scripts/configure-user.sh" || {
-  echo "Normal Floorp Navidrome launcher is missing" >&2
+grep -qF 'firefox --new-tab http://127.0.0.1:4533/' "$root/scripts/configure-user.sh" || {
+  echo "Normal Firefox Navidrome launcher is missing" >&2
   exit 1
 }
-grep -qF 'SUPER + SHIFT + M' "$root/dotfiles/hypr/.config/hypr/bindings.lua" || {
-  echo "Navidrome keybinding is missing" >&2
+grep -qF 'firefox-navidrome.desktop' "$root/scripts/configure-user.sh" || {
+  echo 'Firefox Navidrome desktop entry is missing' >&2
   exit 1
 }
+grep -qF 'uwsm-app -- firefox --new-tab http://127.0.0.1:4533/' "$root/dotfiles/hypr/.config/hypr/bindings.lua" || {
+  echo "Firefox Navidrome keybinding is missing" >&2
+  exit 1
+}
+grep -qF 'exec uwsm-app -- firefox' "$root/dotfiles/bin/.local/bin/desktop-browser"
+grep -qF 'args+=(--private-window)' "$root/dotfiles/bin/.local/bin/desktop-browser"
+grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
+grep -qF 'tag = "+firefox-browser"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
+grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
+
+if rg -n -i 'floorp|chromium' "$root/scripts/configure-user.sh" "$root/dotfiles/bin/.local/bin/desktop-browser" \
+    "$root/dotfiles/hypr/.config/hypr/apps/browser.lua" "$root/dotfiles/hypr/.config/hypr/bindings.lua" \
+    "$root/dotfiles/hypr/.config/hypr/hyprland.lua"; then
+  echo 'An obsolete browser remains in active runtime configuration' >&2
+  exit 1
+fi
 
 for test_script in run.sh static.sh behavior.sh vm.sh vm-guest.sh; do
   [[ -x $root/tests/$test_script ]] || { echo "Test script is not executable: $test_script" >&2; exit 1; }

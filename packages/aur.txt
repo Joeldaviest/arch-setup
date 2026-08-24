@@ -1,5 +1,4 @@
 # AUR helper is bootstrapped separately
-floorp-bin
 walker-bin
 vscodium-bin
 oh-my-zsh-git
