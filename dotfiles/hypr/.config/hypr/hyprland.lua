@@ -2,6 +2,15 @@
 require("./environment.lua")
 require("./looknfeel.lua")
 require("./input.lua")
+
+-- Assign application workspaces before loading app-specific rules so later
+-- exceptions (for example Firefox's sharing indicator) can override them.
+hl.window_rule({ match = { class = "^Alacritty$" }, workspace = "1 silent" })
+hl.window_rule({ match = { class = "^[fF]irefox" }, workspace = "2 silent", group = "set" })
+hl.window_rule({ match = { class = "^(codium|VSCodium)$" }, workspace = "3 silent", group = "set" })
+hl.window_rule({ match = { class = "^steam$" }, workspace = "4 silent" })
+hl.window_rule({ match = { class = "^(Lutris|lutris)$" }, workspace = "5 silent" })
+
 require("./windows.lua")
 require("./media.lua")
 require("./clipboard.lua")
@@ -29,10 +38,3 @@ requireLocal("monitors")
 requireLocal("input")
 requireLocal("environment")
 requireLocal("autostart")
-
--- Application workspace assignments
-hl.window_rule({ match = { class = "^Alacritty$" }, workspace = "1 silent" })
-hl.window_rule({ match = { class = "^[fF]irefox" }, workspace = "2 silent" })
-hl.window_rule({ match = { class = "^(codium|VSCodium)$" }, workspace = "3 silent" })
-hl.window_rule({ match = { class = "^steam$" }, workspace = "4 silent" })
-hl.window_rule({ match = { class = "^(Lutris|lutris)$" }, workspace = "5 silent" })

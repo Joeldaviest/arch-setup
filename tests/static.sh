@@ -85,6 +85,22 @@ grep -qF 'args+=(--private-window)' "$root/dotfiles/bin/.local/bin/desktop-brows
 grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
 grep -qF 'tag = "+firefox-browser"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
 grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
+grep -qF 'class = "^[fF]irefox" }, workspace = "2 silent", group = "set"' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
+grep -qF 'class = "^(codium|VSCodium)$" }, workspace = "3 silent", group = "set"' "$root/dotfiles/hypr/.config/hypr/hyprland.lua"
+if grep -qE 'match = \{ workspace = "(2|3)" \}' "$root/dotfiles/hypr/.config/hypr/windows.lua"; then
+  echo 'Grouped application rules still depend on the window initial workspace' >&2
+  exit 1
+fi
+assignment_line=$(grep -nF 'class = "^[fF]irefox" }, workspace = "2 silent", group = "set"' "$root/dotfiles/hypr/.config/hypr/hyprland.lua" | cut -d: -f1)
+windows_load_line=$(grep -nF 'require("./windows.lua")' "$root/dotfiles/hypr/.config/hypr/hyprland.lua" | cut -d: -f1)
+[[ -n $assignment_line && -n $windows_load_line && $assignment_line -lt $windows_load_line ]]
+apps_load_line=$(grep -nF 'require("./apps/*.lua")' "$root/dotfiles/hypr/.config/hypr/windows.lua" | cut -d: -f1)
+floating_consumer_line=$(grep -nF 'match = { tag = "floating-window" }' "$root/dotfiles/hypr/.config/hypr/windows.lua" | cut -d: -f1)
+[[ -n $apps_load_line && -n $floating_consumer_line && $apps_load_line -lt $floating_consumer_line ]]
+if grep -qF 'match = { tag = "floating-window" }' "$root/dotfiles/hypr/.config/hypr/apps/system.lua"; then
+  echo 'Floating-window tag is still consumed before all application rules load' >&2
+  exit 1
+fi
 
 if rg -n -i 'floorp|chromium' "$root/scripts/configure-user.sh" "$root/dotfiles/bin/.local/bin/desktop-browser" \
     "$root/dotfiles/hypr/.config/hypr/apps/browser.lua" "$root/dotfiles/hypr/.config/hypr/bindings.lua" \
@@ -236,6 +252,37 @@ grep -qF 'systemd-networkd.service' "$root/scripts/configure-system.sh"
 grep -qF 'disable systemd-networkd-wait-online.service' "$root/scripts/configure-system.sh"
 grep -qF 'fwupd-refresh.timer' "$root/scripts/configure-system.sh"
 grep -qF "powerprofilesctl configure-battery-aware --enable" "$root/scripts/configure-system.sh"
+grep -qxF 'BOOT_ORDER="linux-zen, linux-lts, *, *fallback, Snapshots"' "$root/system/limine-entry-tool.conf"
+grep -qF '/etc/limine-entry-tool.d/90-arch-setup-kernels.conf' "$root/scripts/configure-system.sh"
+grep -qF 'sudo limine-update' "$root/scripts/configure-system.sh"
+
+limine_fixture=$(mktemp)
+limine_result=$(mktemp)
+trap 'rm -f "$limine_fixture" "$limine_result"' EXIT
+printf '%s\n' \
+  'timeout: 5' \
+  'default_entry: 1' \
+  'remember_last_entry: yes' \
+  '/+Arch Linux' \
+  '//linux-lts' \
+  'protocol: linux' \
+  'path: boot():/vmlinuz-linux-lts' \
+  '//linux-zen' \
+  'protocol: linux' \
+  'path: boot():/vmlinuz-linux-zen' \
+  '//linux-zen-fallback' \
+  'protocol: linux' \
+  'path: boot():/vmlinuz-linux-zen' >"$limine_fixture"
+source "$root/scripts/lib/limine.sh"
+zen_entry=$(find_limine_zen_entry "$limine_fixture")
+[[ $zen_entry == 'Arch Linux/linux-zen' ]]
+write_limine_zen_default "$limine_fixture" "$limine_result" "$zen_entry"
+grep -qxF 'default_entry: Arch Linux/linux-zen' "$limine_result"
+grep -qxF 'remember_last_entry: no' "$limine_result"
+[[ $(grep -ciE '^[[:space:]]*default_entry[[:space:]]*:' "$limine_result") == 1 ]]
+[[ $(grep -ciE '^[[:space:]]*remember_last_entry[[:space:]]*:' "$limine_result") == 1 ]]
+rm -f "$limine_fixture" "$limine_result"
+trap - EXIT
 if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
   echo 'systemd-networkd configuration must not claim Wi-Fi interfaces managed by IWD' >&2
   exit 1

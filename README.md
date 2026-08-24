@@ -12,11 +12,13 @@ branding, migration system, or ISO.
 - Working internet access
 - A supported kernel (`linux`, `linux-lts`, `linux-zen`, or `linux-hardened`)
 
-The setup deliberately does not change partitions, encryption, the installed
-bootloader, mkinitcpio hooks, Plymouth, or hibernation. It installs the packages
-needed for the planned Limine, encrypted-Btrfs, and Snapper layout, but does not
-deploy Limine or create a Snapper configuration until that layout has been
-validated during the installation work.
+The setup deliberately does not change partitions, encryption, mkinitcpio
+hooks, Plymouth, or hibernation. It does not deploy a bootloader, but when an
+existing Limine configuration contains a `linux-zen` entry it makes that entry
+the persistent default and keeps `linux-lts` second as the recovery kernel. It
+installs the packages needed for the planned encrypted-Btrfs and Snapper layout,
+but does not create a Snapper configuration until that layout has been validated
+during the installation work.
 
 ## Usage
 
@@ -148,11 +150,13 @@ they provide a dependency that yay would otherwise resolve to a conflicting
 package. Hardware-only packages are selected at runtime.
 
 The managed kernel set is `linux-zen` for normal use and `linux-lts` as the
-fallback. Headers for both are retained so every managed DKMS module is built
-for both kernels. Recovery packages include Limine, Btrfs tools, Snapper,
-snap-pac, and pacman-contrib. The weekly `paccache.timer` keeps the three newest
-cached package versions. On a Btrfs root, the monthly scrub timer is enabled;
-Snapper cleanup is enabled only after a valid root configuration exists.
+fallback. Existing Limine installations are ordered accordingly, with Zen as a
+named default so alphabetical ordering and the last selected entry cannot make
+LTS boot automatically. Headers for both are retained so every managed DKMS
+module is built for both kernels. Recovery packages include Limine, Btrfs tools,
+Snapper, snap-pac, and pacman-contrib. The weekly `paccache.timer` keeps the three
+newest cached package versions. On a Btrfs root, the monthly scrub timer is
+enabled; Snapper cleanup is enabled only after a valid root configuration exists.
 
 Arch is rolling release: this repository reproduces package selection and
 configuration, not historic binary versions. `./setup.sh --check` verifies that

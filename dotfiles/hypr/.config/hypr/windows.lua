@@ -25,18 +25,16 @@ hl.window_rule({
   no_focus = true,
 })
 
--- Workspaces 2 (browser) and 3 (editor) default to tabbed groups
-hl.window_rule({
-  match = { workspace = "2" },
-  group = "set",
-})
-hl.window_rule({
-  match = { workspace = "3" },
-  group = "set",
-})
-
 -- App-specific tweaks (may remove default-opacity tag)
 require("./apps/*.lua")
+
+-- Consume shared tags only after every app rule has had a chance to add them.
+hl.window_rule({
+  match = { tag = "floating-window" },
+  float = true,
+  center = true,
+  size = "45% 55%",
+})
 
 -- Apply default opacity after apps have had a chance to opt out
 hl.window_rule({

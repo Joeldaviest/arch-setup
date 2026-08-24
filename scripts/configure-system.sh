@@ -2,6 +2,7 @@
 
 set -Eeuo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/scripts/lib/common.sh"
+source "$SETUP_ROOT/scripts/lib/limine.sh"
 
 note "Configuring locale"
 sudo sed -i '/^#en_US.UTF-8 UTF-8/s/^#//' /etc/locale.gen
@@ -31,6 +32,53 @@ sudo install -Dm644 "$SETUP_ROOT/system/blacklist-xpad.conf" /etc/modprobe.d/bla
 sudo install -Dm644 "$SETUP_ROOT/system/iwd.conf" /etc/iwd/main.conf
 sudo install -Dm644 "$SETUP_ROOT/system/20-wired.network" /etc/systemd/network/20-wired.network
 sudo install -Dm644 "$SETUP_ROOT/system/zram-generator.conf" /etc/systemd/zram-generator.conf
+sudo install -Dm644 "$SETUP_ROOT/system/limine-entry-tool.conf" /etc/limine-entry-tool.d/90-arch-setup-kernels.conf
+
+# limine-entry-tool preserves the global section when it regenerates entries.
+# Set the named default first, then let limine-update regenerate entries and run
+# any configured signing or config-enrollment hooks. Update every supported
+# candidate:
+# UEFI Limine prefers a config beside its executable, while BIOS and older UEFI
+# installations commonly use one of the /boot locations.
+limine_configured=false
+limine_source=$(mktemp)
+limine_output=$(mktemp)
+trap 'rm -f "$limine_source" "$limine_output"' EXIT
+for limine_config in \
+  /boot/EFI/limine/limine.conf \
+  /boot/EFI/BOOT/limine.conf \
+  /boot/limine/limine.conf \
+  /boot/limine.conf; do
+  sudo test -f "$limine_config" || continue
+  sudo cat "$limine_config" | tee "$limine_source" >/dev/null
+  zen_entry=$(find_limine_zen_entry "$limine_source")
+  if [[ -z $zen_entry ]]; then
+    note "Skipping $limine_config: no non-fallback linux-zen entry found"
+    continue
+  fi
+
+  write_limine_zen_default "$limine_source" "$limine_output" "$zen_entry"
+  if ! sudo cmp -s "$limine_output" "$limine_config"; then
+    sudo test -e "$limine_config.arch-setup.bak" || sudo cp -a "$limine_config" "$limine_config.arch-setup.bak"
+    limine_mode=$(sudo stat -c '%a' "$limine_config")
+    limine_uid=$(sudo stat -c '%u' "$limine_config")
+    limine_gid=$(sudo stat -c '%g' "$limine_config")
+    sudo install -m "$limine_mode" -o "$limine_uid" -g "$limine_gid" "$limine_output" "$limine_config"
+  fi
+  note "Limine default kernel: $zen_entry ($limine_config)"
+  limine_configured=true
+done
+rm -f "$limine_source" "$limine_output"
+trap - EXIT
+
+if [[ $limine_configured == false ]]; then
+  note "No existing Limine configuration with a linux-zen entry was found; bootloader deployment remains unchanged"
+fi
+
+if command_exists limine-update; then
+  note "Ordering Limine kernel entries with Zen first"
+  sudo limine-update
+fi
 
 sudo usermod -aG docker,input "$USER"
 

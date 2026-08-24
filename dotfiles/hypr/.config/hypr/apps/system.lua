@@ -1,11 +1,3 @@
--- Floating windows
-hl.window_rule({
-  match = { tag = "floating-window" },
-  float = true,
-  center = true,
-  size = "45% 55%",
-})
-
 hl.window_rule({
   match = { class = "TUI\\.float|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
   tag = "+floating-window",
