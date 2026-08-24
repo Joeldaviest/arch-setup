@@ -67,6 +67,11 @@ window#waybar {
 
 tooltip {
   padding: 2px;
+  background-color: @background;
+}
+
+tooltip label {
+  background-color: @background;
 }
 
 #custom-update {

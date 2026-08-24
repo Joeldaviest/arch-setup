@@ -161,6 +161,10 @@ grep -A2 -F 'window#waybar {' "$waybar_style" | grep -qF 'background-color: @bac
 grep -qF '#workspaces button.urgent {' "$waybar_style"
 grep -A5 -F '#workspaces button.urgent {' "$waybar_style" | grep -qF 'background-color: #f7768e;'
 grep -A5 -F '#workspaces button.urgent {' "$waybar_style" | grep -qF 'color: @foreground;'
+grep -qF 'tooltip {' "$waybar_style"
+grep -A3 -F 'tooltip {' "$waybar_style" | grep -qF 'background-color: @background;'
+grep -qF 'tooltip label {' "$waybar_style"
+grep -A2 -F 'tooltip label {' "$waybar_style" | grep -qF 'background-color: @background;'
 grep -qF 'focus_on_activate = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '
