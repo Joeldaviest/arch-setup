@@ -6,7 +6,7 @@
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["clock", "custom/weather"],
   "modules-right": [
-    "mpris",
+    "custom/music",
     "pulseaudio",
     "privacy",
     "custom/screenrecording",
@@ -84,22 +84,16 @@
     "on-click-right": "swaync-client -d -sw",
     "escape": true
   },
-  "mpris": {
-    "format": "{player_icon} {status_icon}",
-    "format-paused": "{player_icon} {status_icon}",
-    "format-stopped": "",
-    "tooltip-format": "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}",
-    "player-icons": {
-      "default": "󰎈",
-      "firefox": "",
-      "floorp": "",
-      "mpv": ""
-    },
-    "status-icons": {
-      "playing": "󰐊",
-      "paused": "󰏤",
-      "stopped": "󰓛"
-    }
+  "custom/music": {
+    "exec": "waybar-module-music --marquee --artist-width 16 --title-width 24 --effect-speed 200 --play-icon '󰐊' --pause-icon '󰏤' --format '%icon% %artist% — %title%'",
+    "return-type": "json",
+    "restart-interval": 5,
+    "on-click": "playerctl play-pause",
+    "on-click-middle": "playerctl next",
+    "on-click-right": "playerctl previous",
+    "on-scroll-up": "playerctl next",
+    "on-scroll-down": "playerctl previous",
+    "tooltip": false
   },
   "privacy": {
     "icon-spacing": 4,

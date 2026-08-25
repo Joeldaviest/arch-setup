@@ -19,5 +19,6 @@ Notable package sources and decisions:
 | SwayOSD | official `swayosd` |
 | VSCodium | AUR `vscodium-bin` |
 | Claude Code | AUR `claude-code` |
+| Waybar media display | AUR `waybar-module-music-git` |
 | Limine/Snapper recovery base | official `limine`, `snapper`, `snap-pac`, and `btrfs-progs` |
 | Plymouth | outside repository scope |

@@ -126,7 +126,7 @@ jq empty "$waybar_config"
 jq -e '
   ."modules-left" == ["hyprland/workspaces"] and
   ."modules-center" == ["clock", "custom/weather"] and
-  ."modules-right" == ["mpris", "pulseaudio", "privacy", "custom/screenrecording",
+  ."modules-right" == ["custom/music", "pulseaudio", "privacy", "custom/screenrecording",
     "cpu", "memory", "custom/storage", "idle_inhibitor", "custom/notification",
     "network", "bluetooth", "battery", "power-profiles-daemon", "tray"] and
   (.privacy.modules == [{"type": "audio-in", "tooltip": true, "tooltip-icon-size": 24}]) and
@@ -150,8 +150,12 @@ jq -e '
   (."custom/weather".signal == 8) and
   (."custom/weather"["on-click"] | contains("weather-status --detail") and contains("read -rsn1")) and
   (."custom/weather"["on-click-right"] == "weather-location") and
-  (.mpris.format == "{player_icon} {status_icon}") and
-  (.mpris["tooltip-format"] == "{player_icon} {player} ({status})\nTitle: {title}\nArtist: {artist}") and
+  (."custom/music".exec | contains("waybar-module-music --marquee") and
+    contains("--artist-width 16") and contains("--title-width 24")) and
+  (."custom/music"["return-type"] == "json") and
+  (."custom/music"["on-click"] == "playerctl play-pause") and
+  (."custom/music"["on-click-middle"] == "playerctl next") and
+  (."custom/music"["on-click-right"] == "playerctl previous") and
   (."power-profiles-daemon".format == "{icon}") and
   (."power-profiles-daemon".tooltip == false) and
   (."power-profiles-daemon"["on-click"] == "power-profile-cycle") and

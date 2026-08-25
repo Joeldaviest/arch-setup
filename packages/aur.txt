@@ -9,3 +9,4 @@ xpadneo-dkms
 ttf-ia-writer
 yaru-icon-theme
 protonplus
+waybar-module-music-git

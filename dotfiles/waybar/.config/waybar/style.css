@@ -56,7 +56,7 @@ window#waybar {
 #pulseaudio,
 #power-profiles-daemon,
 #idle_inhibitor,
-#mpris,
+#custom-music,
 #custom-notification,
 #network,
 #bluetooth,
@@ -102,11 +102,11 @@ tooltip label {
   color: @accent;
 }
 
-#mpris.playing {
+#custom-music.playing {
   color: @accent;
 }
 
-#mpris.paused {
+#custom-music.paused {
   color: @foreground;
   opacity: 0.75;
 }
