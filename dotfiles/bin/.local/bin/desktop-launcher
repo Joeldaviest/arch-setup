@@ -6,7 +6,7 @@ min_height=${WALKER_MIN_HEIGHT:-300}
 max_height=${WALKER_MAX_HEIGHT:-300}
 
 if ! pgrep -f 'walker --gapplication-service' >/dev/null; then
-  setsid uwsm-app -- env GSK_RENDERER=cairo walker --gapplication-service >/dev/null 2>&1 &
+  setsid uwsm-app -- walker --gapplication-service >/dev/null 2>&1 &
   sleep 0.2
 fi
 exec walker --width "$width" --maxheight "$max_height" --minheight "$min_height" "$@"

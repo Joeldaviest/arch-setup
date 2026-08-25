@@ -27,6 +27,14 @@ for helper in "${required_helpers[@]}"; do
   [[ -x $root/dotfiles/bin/.local/bin/$helper ]] || { echo "Missing helper: $helper" >&2; exit 1; }
 done
 
+desktop_launcher="$root/dotfiles/bin/.local/bin/desktop-launcher"
+grep -qF 'setsid uwsm-app -- walker --gapplication-service' "$desktop_launcher"
+if grep -qF 'GSK_RENDERER=' "$desktop_launcher"; then
+  echo 'Walker is forced to use a specific GTK renderer' >&2
+  exit 1
+fi
+grep -qF 'max_results = 50' "$root/dotfiles/walker/.config/walker/config.toml"
+
 for legacy_helper in webapp-launch gmail-handler; do
   [[ ! -e $root/dotfiles/bin/.local/bin/$legacy_helper ]] || { echo "Legacy helper remains: $legacy_helper" >&2; exit 1; }
 done
@@ -125,6 +133,12 @@ jq -e '
   (."custom/notification".exec == "swaync-client -swb") and
   (."custom/notification"["on-click"] == "swaync-client -t -sw") and
   (."custom/notification"["on-click-right"] == "swaync-client -d -sw") and
+  (."custom/screenrecording".signal == 9) and
+  (."custom/screenrecording" | has("interval") | not) and
+  (.network.interval == 5) and
+  (.cpu.interval == 10) and
+  (.memory.interval == 10) and
+  (."custom/storage".interval == 120) and
   (["cpu", "memory", "custom/storage"] | all(. as $module |
     ($ARGS.named.config[$module]["on-click"] | contains("btop")))) and
   (.clock.locale == "C") and
@@ -156,6 +170,9 @@ grep -A3 -F 'tooltip {' "$waybar_style" | grep -qF 'background-color: @backgroun
 grep -qF 'tooltip label {' "$waybar_style"
 grep -A2 -F 'tooltip label {' "$waybar_style" | grep -qF 'background-color: @background;'
 grep -qF 'focus_on_activate = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
+grep -qF 'passes = 1' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
+grep -qF 'special = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
+grep -qF 'pkill -RTMIN+9 -x waybar' "$root/dotfiles/bin/.local/bin/desktop-screenrecord"
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '
   .widgets == ["title", "dnd", "notifications"] and

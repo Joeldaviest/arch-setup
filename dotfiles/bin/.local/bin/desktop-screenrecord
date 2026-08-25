@@ -224,7 +224,6 @@ stop_screenrecording() {
     count=$((count + 1))
   done
 
-  toggle_screenrecording_indicator
   cleanup_webcam
 
   if pgrep -f "^gpu-screen-recorder" >/dev/null; then
@@ -247,10 +246,11 @@ stop_screenrecording() {
   fi
 
   rm -f "$RECORDING_FILE"
+  toggle_screenrecording_indicator
 }
 
 toggle_screenrecording_indicator() {
-  pkill -RTMIN+8 waybar
+  pkill -RTMIN+9 -x waybar 2>/dev/null || true
 }
 
 screenrecording_active() {
