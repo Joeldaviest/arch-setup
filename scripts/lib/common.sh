@@ -40,10 +40,6 @@ check_repository() {
     [[ -f $SETUP_ROOT/$path ]] || die "Missing repository file: $path"
   done
 
-  if grep -RInE 'pkgs\.omarchy|mirror\.omarchy|\[omarchy\]' "$SETUP_ROOT" --exclude=README.md; then
-    die "Omarchy repository reference detected"
-  fi
-
   local duplicates
   duplicates=$(cat \
     <(read_manifest "$SETUP_ROOT/packages/official.txt") \

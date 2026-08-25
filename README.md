@@ -1,9 +1,8 @@
 # Arch Setup
 
 A personal, reproducible Arch Linux post-install setup for a Tokyo Night
-Hyprland desktop. It is derived from a customized Omarchy installation but is
-standalone: it does not use an Omarchy package repository, updater, menu,
-branding, migration system, or ISO.
+Hyprland desktop. It uses only Arch Linux repositories and the AUR, with its
+own setup scripts, desktop utilities, configuration, and upgrade workflow.
 
 ## Prerequisites
 

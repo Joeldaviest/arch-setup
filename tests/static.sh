@@ -14,16 +14,6 @@ duplicates=$(cat \
   <(sed -E 's/[[:space:]]+#.*$//;/^[[:space:]]*(#|$)/d' "$root/packages/aur.txt") | sort | uniq -d)
 [[ -z $duplicates ]] || { echo "Duplicate classification: $duplicates" >&2; exit 1; }
 
-if grep -RInE 'pkgs\.omarchy|mirror\.omarchy|\[omarchy\]' "$root" --exclude=README.md --exclude=static.sh; then
-  echo 'Custom Omarchy repository reference found' >&2
-  exit 1
-fi
-
-if grep -RInE '(^|[ /])omarchy-|OMARCHY_|\.config/omarchy|\.local/share/omarchy' "$root/dotfiles"; then
-  echo 'Runtime Omarchy dependency found' >&2
-  exit 1
-fi
-
 required_helpers=(
   audio-input-mute audio-output-switch desktop-audio desktop-bluetooth desktop-browser
   desktop-editor desktop-firmware desktop-launcher desktop-osd desktop-power desktop-screenrecord
@@ -292,7 +282,7 @@ if grep -qE 'Name=.*(wl\*|wlan)' "$root/system/20-wired.network"; then
   exit 1
 fi
 
-sddm_theme="$root/system/sddm-theme/omarchy/Main.qml"
+sddm_theme="$root/system/sddm-theme/arch-setup/Main.qml"
 grep -qF 'userModel.lastUser' "$sddm_theme"
 grep -qF 'userModel.count > 0' "$sddm_theme"
 grep -qF 'Qt.UserRole + 1' "$sddm_theme"

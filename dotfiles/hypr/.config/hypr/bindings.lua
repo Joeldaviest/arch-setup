@@ -43,7 +43,7 @@ hl.bind("SUPER + SHIFT + B", hl.dsp.exec_cmd("desktop-bluetooth"), { description
 hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("desktop-wifi"), { description = "Wi-Fi controls" })
 hl.bind("XF86PowerOff", hl.dsp.exec_cmd("desktop-power menu"), { locked = true, description = "Power menu" })
 
--- Relocated Omarchy functions that conflict with the i3 mappings
+-- Desktop functions relocated to avoid conflicts with the i3 mappings
 hl.bind("SUPER + E", hl.dsp.exec_cmd("workspace-group-toggle"), { description = "Toggle tabs/tiling for the whole workspace" })
 hl.bind("SUPER + ALT + K", hl.dsp.exec_cmd("keybindings"), { description = "Show key bindings" })
 

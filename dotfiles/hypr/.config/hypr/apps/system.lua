@@ -1,5 +1,5 @@
 hl.window_rule({
-  match = { class = "TUI\\.float|org.gnome.NautilusPreviewer|com.gabm.satty|Omarchy|About|imv|mpv" },
+  match = { class = "TUI\\.float|org.gnome.NautilusPreviewer|com.gabm.satty|About|imv|mpv" },
   tag = "+floating-window",
 })
 
@@ -19,15 +19,6 @@ hl.window_rule({
     title = "^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)",
   },
   tag = "+floating-window",
-})
-
--- Fullscreen screensaver (leftover from the omarchy base; no screensaver app is
--- installed by this repo, so this rule currently matches nothing)
-hl.window_rule({
-  match = { class = "org.omarchy.screensaver" },
-  fullscreen = true,
-  float = true,
-  animation = "slide",
 })
 
 -- No transparency on media windows

@@ -9,16 +9,15 @@ The setup has no custom binary repository.
 - CPU microcode, graphics, legacy network, and additional kernel-header
   packages are selected at runtime.
 
-Notable replacements for the previous environment:
+Notable package sources and decisions:
 
-| Previous package/workflow | Standalone source |
+| Package/workflow | Source or status |
 | --- | --- |
-| `omarchy-walker` | AUR `walker-bin`, `elephant-bin`, and only the configured providers |
-| Omarchy GPU Screen Recorder build | official `gpu-screen-recorder` |
-| Omarchy Wiremix build | official `wiremix` |
-| Omarchy SwayOSD build | official `swayosd` |
+| Application launcher | AUR `walker-bin`, `elephant-bin`, and only the configured providers |
+| GPU Screen Recorder | official `gpu-screen-recorder` |
+| Wiremix | official `wiremix` |
+| SwayOSD | official `swayosd` |
 | VSCodium | AUR `vscodium-bin` |
 | Claude Code | AUR `claude-code` |
-| Omarchy update/channel packages | removed |
 | Limine/Snapper recovery base | official `limine`, `snapper`, `snap-pac`, and `btrfs-progs` |
 | Plymouth | outside repository scope |

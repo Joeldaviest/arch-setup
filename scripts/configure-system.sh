@@ -13,10 +13,10 @@ note "Installing system configuration"
 sudo install -Dm644 "$SETUP_ROOT/system/sddm.conf" /etc/sddm.conf.d/20-arch-setup.conf
 sudo install -Dm644 "$SETUP_ROOT/system/sddm-theme/greeter-hyprland.lua" /usr/share/sddm/greeter-hyprland.lua
 sudo rm -f /usr/share/sddm/greeter-hyprland.conf
-sudo rm -rf /usr/share/sddm/themes/omarchy
-sudo cp -r "$SETUP_ROOT/system/sddm-theme/omarchy" /usr/share/sddm/themes/omarchy
-sudo install -Dm644 "$SETUP_ROOT/assets/wallpapers/wallhaven-6d1v5q.jpg" /usr/share/sddm/themes/omarchy/logo.jpg
-sudo rm -f /usr/share/sddm/themes/omarchy/logo.png
+sudo rm -rf /usr/share/sddm/themes/arch-setup
+sudo cp -r "$SETUP_ROOT/system/sddm-theme/arch-setup" /usr/share/sddm/themes/arch-setup
+sudo install -Dm644 "$SETUP_ROOT/assets/wallpapers/wallhaven-6d1v5q.jpg" /usr/share/sddm/themes/arch-setup/logo.jpg
+sudo rm -f /usr/share/sddm/themes/arch-setup/logo.png
 sudo rm -f /usr/local/bin/sddm-random-logo /usr/local/bin/sddm-greeter-start
 sudo rm -f /etc/systemd/system/sddm.service.d/10-random-logo.conf
 sudo rmdir /etc/systemd/system/sddm.service.d 2>/dev/null || true

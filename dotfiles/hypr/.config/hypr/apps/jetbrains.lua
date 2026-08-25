@@ -1,4 +1,4 @@
--- Disable mouse focus (see https://github.com/basecamp/omarchy/pull/5183#issuecomment-4189299971)
+-- Disable mouse focus so IDE popups do not unexpectedly steal keyboard focus.
 hl.window_rule({
   name = "jetbrains-focus",
   match = { class = "^(jetbrains-.*)$" },
