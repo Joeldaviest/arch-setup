@@ -33,8 +33,10 @@ fi
 case $action in
   lock|lock-only)
     if ! pgrep -x hyprlock >/dev/null; then
-      hyprlock &
-      disown
+      # A menu invocation runs inside its short-lived terminal app scope.
+      # Give the lock screen its own UWSM scope so closing that terminal does
+      # not terminate hyprlock with the rest of the menu application.
+      setsid -f uwsm-app -- hyprlock
     fi
     hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
     [[ $action == "lock-only" ]] || { sleep 3; pgrep -x hyprlock >/dev/null && hyprctl dispatch dpms off >/dev/null; } &

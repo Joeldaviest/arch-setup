@@ -443,6 +443,31 @@ EOF
   [[ $(<"$command_log") == suspend ]] || fail 'laptop idle policy did not request suspend'
 )
 
+test_desktop_power_lock_uses_independent_scope() (
+  mock_bin="$test_root/power-lock-bin"
+  command_log="$test_root/power-lock-commands"
+  mkdir -p "$mock_bin"
+  cat >"$mock_bin/pgrep" <<'EOF'
+#!/bin/bash
+exit 1
+EOF
+  cat >"$mock_bin/setsid" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >>"$POWER_LOCK_LOG"
+EOF
+  cat >"$mock_bin/hyprctl" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+  chmod +x "$mock_bin/pgrep" "$mock_bin/setsid" "$mock_bin/hyprctl"
+
+  POWER_LOCK_LOG="$command_log" PATH="$mock_bin:$PATH" \
+    "$root/dotfiles/bin/.local/bin/desktop-power" lock-only
+
+  [[ $(<"$command_log") == '-f uwsm-app -- hyprlock' ]] || \
+    fail 'desktop power lock did not launch hyprlock in an independent UWSM scope'
+)
+
 test_idle_brightness_never_increases_and_restores() (
   mock_bin="$test_root/idle-brightness-bin"
   backlight_dir="$test_root/idle-backlight"
@@ -787,6 +812,7 @@ test_wallpaper_select_previews_and_applies_safely
 test_weather_status_uses_rich_cached_conditions
 test_weather_location_searches_and_selects_coordinates
 test_idle_suspend_is_laptop_only
+test_desktop_power_lock_uses_independent_scope
 test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap
 test_tmux_new_session_names_from_current_directory
