@@ -60,6 +60,19 @@ if grep -qxF floorp-bin "$root/packages/aur.txt"; then
 fi
 grep -qxF floorp-bin "$root/packages/obsolete.txt"
 grep -qxF chromium "$root/packages/obsolete.txt"
+if grep -qxF claude-code "$root/packages/aur.txt"; then
+  echo 'Claude Code remains in the active AUR package manifest' >&2
+  exit 1
+fi
+grep -qxF claude-code "$root/packages/obsolete.txt"
+grep -qF 'curl -fsSL https://claude.ai/install.sh | bash' "$root/scripts/lib/packages.sh" || {
+  echo "Anthropic's native Claude Code installer is missing" >&2
+  exit 1
+}
+grep -qF 'install_claude_code' "$root/setup.sh" || {
+  echo 'Claude Code native installation is not part of setup' >&2
+  exit 1
+}
 
 if grep -qF 'webapp-launch' "$root/dotfiles/hypr/.config/hypr/bindings.lua"; then
   echo "Legacy web-app keybinding remains" >&2
@@ -174,8 +187,7 @@ grep -A3 -F 'tooltip {' "$waybar_style" | grep -qF 'background-color: @backgroun
 grep -qF 'tooltip label {' "$waybar_style"
 grep -A2 -F 'tooltip label {' "$waybar_style" | grep -qF 'background-color: @background;'
 grep -qF 'focus_on_activate = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
-grep -qF 'passes = 1' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
-grep -qF 'special = false' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
+grep -qF 'passes = 2' "$root/dotfiles/hypr/.config/hypr/looknfeel.lua"
 grep -qF 'pkill -RTMIN+9 -x waybar' "$root/dotfiles/bin/.local/bin/desktop-screenrecord"
 swaync_config="$root/dotfiles/swaync/.config/swaync/config.json"
 jq -e '

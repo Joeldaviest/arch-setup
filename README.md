@@ -146,7 +146,11 @@ repository; setup enables it before installation. `packages/aur.txt` is
 installed with `yay`, bootstrapped from the AUR when necessary. Packages in
 `packages/aur-preinstall.txt` are installed in an earlier AUR transaction when
 they provide a dependency that yay would otherwise resolve to a conflicting
-package. Hardware-only packages are selected at runtime.
+package. `packages/flatpak.txt` contains applications installed system-wide
+from Flathub. Claude Code is installed per-user with Anthropic's native
+installer and subsequently maintained by its built-in updater; an existing AUR
+installation is removed during migration. Hardware-only packages are selected
+at runtime.
 
 The managed kernel set is `linux-zen` for normal use and `linux-lts` as the
 fallback. Existing Limine installations are ordered accordingly, with Zen as a

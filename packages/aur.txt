@@ -3,7 +3,6 @@ walker-bin
 vscodium-bin
 oh-my-zsh-git
 localsend-bin
-claude-code
 ufw-docker
 xpadneo-dkms
 ttf-ia-writer

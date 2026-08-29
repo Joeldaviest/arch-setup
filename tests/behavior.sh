@@ -97,6 +97,29 @@ test_install_includes_multilib_manifest() (
     fail 'Elephant binary provider was not installed before Walker'
 )
 
+test_claude_code_uses_native_installer_once() (
+  source "$root/scripts/lib/common.sh"
+  source "$root/scripts/lib/packages.sh"
+  HOME="$test_root/claude-home"
+
+  curl() {
+    [[ $1 == -fsSL && $2 == https://claude.ai/install.sh ]] || fail 'called an unexpected Claude Code installer URL'
+    printf '%s\n' \
+      '#!/bin/bash' \
+      'mkdir -p "$HOME/.local/bin"' \
+      'touch "$HOME/.local/bin/claude"' \
+      'chmod +x "$HOME/.local/bin/claude"'
+  }
+
+  install_claude_code >/dev/null
+  [[ -x $HOME/.local/bin/claude ]] || fail 'native Claude Code launcher was not installed'
+
+  curl() {
+    fail 'reran the Claude Code installer for an existing native installation'
+  }
+  install_claude_code >/dev/null
+)
+
 test_wallpaper_start() (
   test_home="$test_root/wallpaper-home"
   wallpaper_dir="$test_home/.config/wallpapers"
@@ -806,6 +829,7 @@ test_windows_vm_rejects_unknown_subcommand() (
 test_multilib_check_is_deferred_when_disabled
 test_multilib_check_runs_when_enabled
 test_install_includes_multilib_manifest
+test_claude_code_uses_native_installer_once
 test_wallpaper_start
 test_wallpaper_apply_recovers_daemon_and_preserves_fallback
 test_wallpaper_select_previews_and_applies_safely

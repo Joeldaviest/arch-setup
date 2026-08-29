@@ -11,14 +11,14 @@ The setup has no custom binary repository.
 
 Notable package sources and decisions:
 
-| Package/workflow | Source or status |
-| --- | --- |
-| Application launcher | AUR `walker-bin`, `elephant-bin`, and only the configured providers |
-| GPU Screen Recorder | official `gpu-screen-recorder` |
-| Wiremix | official `wiremix` |
-| SwayOSD | official `swayosd` |
-| VSCodium | AUR `vscodium-bin` |
-| Claude Code | AUR `claude-code` |
-| Waybar media display | AUR `waybar-module-music-git` |
-| Limine/Snapper recovery base | official `limine`, `snapper`, `snap-pac`, and `btrfs-progs` |
-| Plymouth | outside repository scope |
+| Package/workflow             | Source or status                                                    |
+| ---------------------------- | ------------------------------------------------------------------- |
+| Application launcher         | AUR `walker-bin`, `elephant-bin`, and only the configured providers |
+| GPU Screen Recorder          | official `gpu-screen-recorder`                                      |
+| Wiremix                      | official `wiremix`                                                  |
+| SwayOSD                      | official `swayosd`                                                  |
+| VSCodium                     | AUR `vscodium-bin`                                                  |
+| Claude Code                  | Anthropic native installer (`https://claude.ai/install.sh`)         |
+| Waybar media display         | AUR `waybar-module-music-git`                                       |
+| Limine/Snapper recovery base | official `limine`, `snapper`, `snap-pac`, and `btrfs-progs`         |
+| Plymouth                     | outside repository scope                                            |

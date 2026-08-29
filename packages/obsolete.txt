@@ -4,6 +4,7 @@ chromium
 mako
 swaybg
 mise
+claude-code
 elephant-all-bin
 elephant-1password-bin
 elephant-aptpackages-bin

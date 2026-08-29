@@ -36,6 +36,7 @@ fi
 
 sudo -v
 install_packages
+install_claude_code
 "$SETUP_ROOT/scripts/configure-dotfiles.sh"
 "$SETUP_ROOT/scripts/configure-system.sh"
 "$SETUP_ROOT/scripts/configure-user.sh"

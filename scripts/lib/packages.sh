@@ -50,6 +50,17 @@ bootstrap_yay() {
   rm -rf "$build_dir"
 }
 
+install_claude_code() {
+  if [[ -x $HOME/.local/bin/claude ]]; then
+    note "Claude Code is already installed through Anthropic's native installer"
+    return
+  fi
+
+  note "Installing Claude Code through Anthropic's native installer"
+  curl -fsSL https://claude.ai/install.sh | bash
+  [[ -x $HOME/.local/bin/claude ]] || die "Claude Code's native installer did not create ~/.local/bin/claude"
+}
+
 install_packages() {
   local -a official multilib aur_preinstall aur obsolete installed_obsolete=()
   local package
@@ -102,6 +113,7 @@ print_dry_run() {
   printf '  %s\n' "${HARDWARE_AUR_PACKAGES[@]}"
   note "Obsolete packages removed during upgrades"
   read_manifest "$SETUP_ROOT/packages/obsolete.txt"
+  note "Claude Code from Anthropic's native installer"
   print_hardware_summary
   note "Would back up conflicting dotfiles, stow configs, install system files, and enable services"
 }
