@@ -34,6 +34,13 @@ if [[ $mode == "dry-run" ]]; then
   exit 0
 fi
 
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/arch-setup"
+mkdir -p "$log_dir"
+log_file="$log_dir/setup-$(date +%Y%m%d-%H%M%S).log"
+ln -sfn "$log_file" "$log_dir/latest.log"
+exec > >(tee -a "$log_file") 2> >(tee -a "$log_file" >&2)
+note "Logging this run to $log_file"
+
 sudo -v
 install_packages
 install_claude_code
