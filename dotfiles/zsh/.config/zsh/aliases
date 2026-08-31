@@ -10,3 +10,18 @@ alias t='tmux attach || tmux new -s Work'
 open() (
   xdg-open "$@" >/dev/null 2>&1 &
 )
+
+if (( $+commands[zoxide] )); then
+  alias cd=zd
+  zd() {
+    if (( $# == 0 )); then
+      builtin cd "$HOME" || return
+    elif [[ -d $1 ]]; then
+      builtin cd "$1" || return
+    elif ! z "$@"; then
+      echo "Directory not found: $*"
+      return 1
+    fi
+    pwd
+  }
+fi

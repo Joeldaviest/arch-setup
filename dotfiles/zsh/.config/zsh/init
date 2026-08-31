@@ -1,26 +1,3 @@
+eval "$(zoxide init zsh)"
 source /usr/share/fzf/completion.zsh
 source /usr/share/fzf/key-bindings.zsh
-
-if (( $+commands[zoxide] )); then
-  export _ZO_ECHO=1
-  eval "$(zoxide init zsh --cmd cd)"
-
-  # Include remembered zoxide directories when completing a partial first
-  # argument. Upstream reserves history completion for <Space><Tab>.
-  _zoxide_cd_complete() {
-    if (( CURRENT == 2 )) && [[ -n ${words[CURRENT]} ]]; then
-      local completion_status=1
-      local -a zoxide_directories
-
-      _cd -/ && completion_status=0
-      zoxide_directories=("${(@f)$(command zoxide query --list -- "${words[CURRENT]}" 2>/dev/null)}")
-      if (( ${#zoxide_directories[@]} )); then
-        compadd -U -J zoxide-directories -- "${zoxide_directories[@]}" && completion_status=0
-      fi
-      return completion_status
-    fi
-
-    __zoxide_z_complete "$@"
-  }
-  compdef _zoxide_cd_complete cd
-fi
