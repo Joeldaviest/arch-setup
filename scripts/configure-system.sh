@@ -33,6 +33,7 @@ sudo install -Dm644 "$SETUP_ROOT/system/iwd.conf" /etc/iwd/main.conf
 sudo install -Dm644 "$SETUP_ROOT/system/20-wired.network" /etc/systemd/network/20-wired.network
 sudo install -Dm644 "$SETUP_ROOT/system/zram-generator.conf" /etc/systemd/zram-generator.conf
 sudo install -Dm644 "$SETUP_ROOT/system/limine-entry-tool.conf" /etc/limine-entry-tool.d/90-arch-setup-kernels.conf
+sudo install -Dm644 "$SETUP_ROOT/system/scx-lavd-balanced.service" /etc/systemd/system/scx-lavd-balanced.service
 
 # limine-entry-tool preserves the global section when it regenerates entries.
 # Set the named default first, then let limine-update regenerate entries and run
@@ -96,7 +97,7 @@ sudo ufw-docker install
 sudo ufw reload
 
 note "Enabling services"
-sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service sddm.service fwupd-refresh.timer paccache.timer
+sudo systemctl enable systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket power-profiles-daemon.service scx-lavd-balanced.service sddm.service fwupd-refresh.timer paccache.timer
 sudo systemctl start docker.socket
 sudo systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 sudo systemctl disable NetworkManager.service 2>/dev/null || true

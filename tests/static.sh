@@ -207,6 +207,12 @@ for package in linux-zen linux-zen-headers linux-lts linux-lts-headers linux-fir
     exit 1
   }
 done
+for package in gamescope scx-scheds; do
+  grep -qxF "$package" "$root/packages/official.txt" || {
+    echo "Missing gaming performance package: $package" >&2
+    exit 1
+  }
+done
 for package in elephant-bin elephant-desktopapplications-bin elephant-websearch-bin \
   elephant-providerlist-bin elephant-files-bin elephant-symbols-bin elephant-calc-bin \
   elephant-clipboard-bin elephant-menus-bin; do
@@ -278,6 +284,8 @@ grep -qF 'RequiredForOnline=no' "$root/system/20-wired.network"
 grep -qF 'systemd-networkd.service' "$root/scripts/configure-system.sh"
 grep -qF 'disable systemd-networkd-wait-online.service' "$root/scripts/configure-system.sh"
 grep -qF 'fwupd-refresh.timer' "$root/scripts/configure-system.sh"
+grep -qF 'scx-lavd-balanced.service' "$root/scripts/configure-system.sh"
+grep -qF 'ExecStart=/usr/bin/scx_lavd --balanced' "$root/system/scx-lavd-balanced.service"
 grep -qF "powerprofilesctl configure-battery-aware --enable" "$root/scripts/configure-system.sh"
 grep -qxF 'BOOT_ORDER="linux-zen, linux-lts, *, *fallback, Snapshots"' "$root/system/limine-entry-tool.conf"
 grep -qF '/etc/limine-entry-tool.d/90-arch-setup-kernels.conf' "$root/scripts/configure-system.sh"

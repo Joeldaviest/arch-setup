@@ -146,6 +146,7 @@ libnotify
 
 # Gaming
 lutris
+gamescope
 wine-staging
 wine-mono
 wine-gecko
@@ -154,6 +155,7 @@ gamemode
 mangohud
 python-protobuf
 mesa
+scx-scheds
 
 # Fonts and desktop integration
 fontconfig

@@ -44,7 +44,7 @@ find "/usr/lib/modules/$kernel_release" -type f -name 'hid-xpadneo.ko*' -print -
 enabled_services=(
   systemd-networkd.service systemd-resolved.service iwd.service bluetooth.service
   cups.service cups-browsed.service avahi-daemon.service ufw.service docker.socket
-  power-profiles-daemon.service sddm.service
+  power-profiles-daemon.service scx-lavd-balanced.service sddm.service
 )
 for service in "${enabled_services[@]}"; do
   systemctl is-enabled --quiet "$service" || fail "service is not enabled: $service"

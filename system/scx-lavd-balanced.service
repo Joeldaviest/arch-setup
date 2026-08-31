@@ -1,0 +1,17 @@
+[Unit]
+Description=LAVD sched_ext CPU scheduler (balanced profile)
+Documentation=https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd
+ConditionPathExists=/sys/kernel/sched_ext
+After=systemd-modules-load.service
+Before=display-manager.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/scx_lavd --balanced
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
