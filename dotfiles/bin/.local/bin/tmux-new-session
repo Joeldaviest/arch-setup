@@ -1,9 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
-target_args=()
-[[ -n ${TMUX_PANE:-} ]] && target_args=(-t "$TMUX_PANE")
-current_dir=$(tmux display-message -p "${target_args[@]}" '#{pane_current_path}')
+# Optional first arg: a client tty (e.g. from `tmux list-clients`), used when
+# this is invoked from outside tmux and there's no $TMUX_PANE to fall back on.
+client_tty=${1:-}
+
+if [[ -n $client_tty ]]; then
+  display_args=(-c "$client_tty")
+elif [[ -n ${TMUX_PANE:-} ]]; then
+  display_args=(-t "$TMUX_PANE")
+else
+  display_args=()
+fi
+
+current_dir=$(tmux display-message -p "${display_args[@]}" '#{pane_current_path}')
 directory_name=${current_dir##*/}
 session_name=$(sed -E 's/[^[:alnum:]_-]+/-/g; s/^-+//; s/-+$//' <<<"$directory_name")
 [[ -n $session_name ]] || session_name=Work
@@ -16,4 +26,8 @@ while tmux has-session -t "=$candidate" 2>/dev/null; do
 done
 
 tmux new-session -d -s "$candidate" -c "$current_dir"
-tmux switch-client -t "$candidate"
+if [[ -n $client_tty ]]; then
+  tmux switch-client -c "$client_tty" -t "$candidate"
+else
+  tmux switch-client -t "$candidate"
+fi

@@ -1,0 +1,16 @@
+#!/bin/bash
+set -uo pipefail
+
+# If a tmux client is already attached somewhere, reuse the most recently
+# active one (i.e. whatever terminal you were just in) instead of opening a
+# new terminal window. Only spawn a new window when no tmux client exists yet.
+client_tty=""
+if list_output=$(tmux list-clients -F '#{client_activity} #{client_tty}' 2>/dev/null) && [[ -n $list_output ]]; then
+  client_tty=$(sort -rn <<<"$list_output" | head -1 | cut -d' ' -f2)
+fi
+
+if [[ -n $client_tty ]]; then
+  exec tmux-new-session "$client_tty"
+else
+  exec uwsm-app -- xdg-terminal-exec --dir="$(terminal-cwd)" bash -c "exec tmux new-session"
+fi
