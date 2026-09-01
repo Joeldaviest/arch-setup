@@ -3,7 +3,13 @@ set -euo pipefail
 state_dir="${XDG_RUNTIME_DIR:-/tmp}/arch-setup-reminders"
 mkdir -p "$state_dir"
 
+sound=/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+
 case ${1:-} in
+  --fire)
+    pw-play "$sound" 2>/dev/null &
+    notify-send -u critical 'Reminder' "${2:-Reminder}"
+    ;;
   show|list)
     timers=$(systemctl --user list-timers --all --no-legend 'desktop-reminder-*.timer' 2>/dev/null || true)
     notify-send 'Upcoming reminders' "${timers:-No outstanding reminders}"
@@ -13,13 +19,23 @@ case ${1:-} in
     rm -f "$state_dir"/*
     notify-send 'Reminders' 'All reminders cleared'
     ;;
-  '') echo 'Usage: reminder <minutes> [message] | show | clear' >&2; exit 2 ;;
+  '') echo 'Usage: reminder <minutes>|<time, e.g. 15:30 or 3pm> [message] | show | clear' >&2; exit 2 ;;
   *)
-    [[ $1 =~ ^[0-9]+$ ]] && (( $1 > 0 )) || { echo 'Minutes must be a positive integer' >&2; exit 2; }
-    minutes=$1; shift; message=${*:-"Your $minutes minutes are up"}
-    unit="desktop-reminder-${minutes}m-$(date +%s)"
-    systemd-run --user --quiet --collect --on-active="${minutes}m" --unit="$unit" notify-send -u critical 'Reminder' "$message"
-    notify-send 'Reminder set' "$message in $minutes minutes"
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+      (( $1 > 0 )) || { echo 'Minutes must be a positive integer' >&2; exit 2; }
+      minutes=$1; shift; message=${*:-"Your $minutes minutes are up"}
+      unit="desktop-reminder-${minutes}m-$(date +%s)"
+      systemd-run --user --quiet --collect --on-active="${minutes}m" --unit="$unit" reminder --fire "$message"
+      notify-send 'Reminder set' "$message in $minutes minutes"
+    else
+      time_spec=$1; shift; message=${*:-"It's $time_spec"}
+      target_epoch=$(date -d "$time_spec" +%s 2>/dev/null) || { echo "Unrecognized time: $time_spec" >&2; exit 2; }
+      # A bare clock time (e.g. 15:30) that has already passed today means tomorrow.
+      (( target_epoch <= $(date +%s) )) && target_epoch=$((target_epoch + 86400))
+      unit="desktop-reminder-$(date -d "@$target_epoch" +%H%M)-$(date +%s)"
+      systemd-run --user --quiet --collect --on-calendar="$(date -d "@$target_epoch" '+%Y-%m-%d %H:%M:%S')" --unit="$unit" reminder --fire "$message"
+      notify-send 'Reminder set' "$message at $(date -d "@$target_epoch" '+%H:%M')"
+    fi
     ;;
 esac
 

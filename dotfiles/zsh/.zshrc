@@ -10,3 +10,6 @@ source "$HOME/.config/zsh/envs"
 source "$HOME/.config/zsh/aliases"
 source "$HOME/.config/zsh/functions"
 source "$HOME/.config/zsh/init"
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

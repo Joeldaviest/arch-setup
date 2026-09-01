@@ -1,5 +1,5 @@
 #!/bin/bash
-minutes=$(gum input --prompt 'Minutes> ' --placeholder '15') || exit 0
-[[ $minutes =~ ^[0-9]+$ ]] || { notify-send 'Reminder' 'Minutes must be a positive integer'; exit 1; }
+when=$(gum input --prompt 'When (minutes or time)> ' --placeholder '15 or 15:30 or 3pm') || exit 0
+[[ -n $when ]] || { notify-send 'Reminder' 'A time or number of minutes is required'; exit 1; }
 message=$(gum input --prompt 'Message> ' --placeholder 'Reminder') || exit 0
-reminder "$minutes" "$message"
+reminder "$when" "$message"
