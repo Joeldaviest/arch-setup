@@ -74,6 +74,21 @@ tooltip label {
   background-color: @background;
 }
 
+menu {
+  padding: 2px;
+  background-color: @background;
+}
+
+menuitem {
+  padding: 4px 8px;
+  color: @foreground;
+}
+
+menuitem:hover {
+  background-color: @accent;
+  color: @background;
+}
+
 #custom-update {
   font-size: 10px;
 }
