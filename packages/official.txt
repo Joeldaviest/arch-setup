@@ -92,6 +92,7 @@ nautilus-python
 gnome-disk-utility
 sushi
 nwg-displays
+transmission-gtk
 
 # Shell and terminal tools
 zsh
