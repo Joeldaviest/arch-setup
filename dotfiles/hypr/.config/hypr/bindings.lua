@@ -41,6 +41,7 @@ hl.bind("SUPER + SHIFT + CTRL + R", hl.dsp.exec_cmd("reminder clear"), { descrip
 hl.bind("SUPER + SHIFT + A", hl.dsp.exec_cmd("desktop-audio"), { description = "Audio controls" })
 hl.bind("SUPER + SHIFT + B", hl.dsp.exec_cmd("desktop-bluetooth"), { description = "Bluetooth controls" })
 hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("desktop-wifi"), { description = "Wi-Fi controls" })
+hl.bind("SUPER + ALT + W", hl.dsp.exec_cmd("warp-toggle"), { description = "Toggle Cloudflare WARP" })
 hl.bind("XF86PowerOff", hl.dsp.exec_cmd("desktop-power menu"), { locked = true, description = "Power menu" })
 
 -- Desktop functions relocated to avoid conflicts with the i3 mappings

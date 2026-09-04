@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+
+command -v warp-cli >/dev/null 2>&1 || {
+  notify-send -u critical "Cloudflare WARP" "warp-cli is unavailable"
+  exit 1
+}
+
+if warp-cli status | grep -q "Connected"; then
+  warp-cli disconnect >/dev/null
+  notify-send -u low "Cloudflare WARP" "󰖂 Disconnected"
+else
+  warp-cli connect >/dev/null
+  notify-send -u low "Cloudflare WARP" "󰖟 Connected"
+fi
