@@ -40,6 +40,10 @@ for mime in video/mp4 video/x-msvideo video/x-matroska video/webm video/quicktim
   xdg-mime default mpv.desktop "$mime"
 done
 
+note "Disabling recent files tracking"
+# Also removes the Recent shortcut from the Nautilus sidebar.
+gsettings set org.gnome.desktop.privacy remember-recent-files false
+
 systemctl --user enable swayosd-server.service 2>/dev/null || true
 
 # elephant has no packaged systemd unit; its own CLI generates

@@ -1,0 +1,40 @@
+#!/bin/bash
+set -euo pipefail
+
+mapfile -t raw <<<"$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS"
+files=()
+for f in "${raw[@]}"; do
+  [[ -n $f ]] && files+=("$f")
+done
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  notify-send "Transcode" "No files selected" -u critical -t 3000
+  exit 1
+fi
+
+picker=${TRANSCODE_PICKER_COMMAND:-walker}
+if ! command -v "$picker" >/dev/null 2>&1; then
+  notify-send "Transcode" "Walker is unavailable" -u critical -t 3000
+  exit 1
+fi
+
+format=$(printf 'mp4\ngif\njpg\npng\n' | "$picker" --dmenu -p "Transcode to") || exit 0
+[[ -z $format ]] && exit 0
+
+quality=""
+if [[ $format == mp4 ]]; then
+  quality=$(printf '1080p\n4k\n' | "$picker" --dmenu -p "Quality") || exit 0
+  [[ -z $quality ]] && exit 0
+fi
+
+failed=0
+for file in "${files[@]}"; do
+  if ! transcode "$file" "$format" ${quality:+"$quality"}; then
+    failed=1
+    notify-send "Transcode" "Failed: $(basename "$file")" -u critical -t 4000
+  fi
+done
+
+if [[ $failed -eq 0 ]]; then
+  notify-send "Transcode" "Done: ${#files[@]} file(s) to $format" -t 3000
+fi
