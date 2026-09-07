@@ -121,6 +121,11 @@ if [[ $(findmnt -nro FSTYPE / 2>/dev/null) == btrfs ]]; then
   else
     note "Btrfs root detected; Snapper activation is deferred until the root layout is configured"
   fi
+
+  if [[ -f /etc/snapper/configs/home ]]; then
+    note "Removing Snapper's home config; only / is snapshotted"
+    sudo snapper -c home delete-config
+  fi
 fi
 
 if ! grep -q 'mdns_minimal' /etc/nsswitch.conf; then

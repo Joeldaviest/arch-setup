@@ -382,6 +382,7 @@ grep -qxF linux-lts-headers <<<"$dual_kernel_headers"
 grep -qF 'paccache.timer' "$root/scripts/configure-system.sh"
 grep -qF 'btrfs-scrub@-.timer' "$root/scripts/configure-system.sh"
 grep -qF '/etc/snapper/configs/root' "$root/scripts/configure-system.sh"
+grep -qF 'snapper -c home delete-config' "$root/scripts/configure-system.sh"
 grep -qF 'systemctl start docker.socket' "$root/scripts/configure-system.sh"
 
 grep -qF 'hl.exec_cmd("uwsm-app -- wallpaper-start")' "$root/dotfiles/hypr/.config/hypr/autostart.lua"
