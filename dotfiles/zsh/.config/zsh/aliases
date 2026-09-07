@@ -6,6 +6,7 @@ alias ....='cd ../../..'
 alias c='claude'
 alias d='docker'
 alias t='tmux attach || tmux new -s Work'
+alias cat='bat'
 
 open() (
   xdg-open "$@" >/dev/null 2>&1 &
