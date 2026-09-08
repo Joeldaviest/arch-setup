@@ -109,14 +109,11 @@
     "ignore-monitor": true
   },
   "network": {
-    "interval": 5,
+    "interval": 1,
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
     "format-wifi": "{icon}", "format-ethernet": "󰀂", "format-disconnected": "󰤮",
     "format-disabled": "󰤭",
-    "tooltip-format-wifi": "Network: {essid}\nInterface: {ifname}\nSignal: {signalStrength}% ({frequency} GHz)\nAddress: {ipaddr}\nUpload: {bandwidthUpBytes}\nDownload: {bandwidthDownBytes}",
-    "tooltip-format-ethernet": "Ethernet: {ifname}\nAddress: {ipaddr}\nUpload: {bandwidthUpBytes}\nDownload: {bandwidthDownBytes}",
-    "tooltip-format-disconnected": "Network disconnected",
-    "tooltip-format-disabled": "Wireless disabled",
+    "tooltip": false,
     "on-click": "desktop-wifi"
   },
   "battery": {
