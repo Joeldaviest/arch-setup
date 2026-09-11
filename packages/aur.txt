@@ -10,3 +10,4 @@ yaru-icon-theme
 protonplus
 waybar-module-music-git
 cloudflare-warp-bin
+jdownloader2
