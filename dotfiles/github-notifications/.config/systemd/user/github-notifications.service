@@ -1,0 +1,6 @@
+[Unit]
+Description=Check GitHub notifications and forward to the desktop notification daemon
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/github-notifications

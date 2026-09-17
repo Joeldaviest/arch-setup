@@ -45,6 +45,15 @@ note "Disabling recent files tracking"
 gsettings set org.gnome.desktop.privacy remember-recent-files false
 
 systemctl --user enable swayosd-server.service 2>/dev/null || true
+systemctl --user enable --now github-notifications.timer 2>/dev/null || true
+
+note "Installing GitHub notifications toggle launcher"
+{
+  printf '%s\n' '[Desktop Entry]' 'Version=1.0' 'Type=Application' 'Name=Toggle GitHub Notifications'
+  printf '%s\n' 'Comment=Enable or disable periodic GitHub notification checks' 'Exec=github-notifications --toggle'
+  printf '%s\n' 'Icon=github' 'Terminal=false' 'Categories=Utility;' 'NoDisplay=false'
+} >"$app_dir/github-notifications-toggle.desktop"
+chmod 0755 "$app_dir/github-notifications-toggle.desktop"
 
 # elephant has no packaged systemd unit; its own CLI generates
 # ~/.config/systemd/user/elephant.service on first run.

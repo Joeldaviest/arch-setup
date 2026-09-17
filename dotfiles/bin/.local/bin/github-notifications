@@ -1,0 +1,78 @@
+#!/bin/bash
+set -euo pipefail
+
+state_dir=${GITHUB_NOTIFICATIONS_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/github-notifications}
+seen_file="$state_dir/seen"
+disable_file="$state_dir/disabled"
+mkdir -p "$state_dir"
+touch "$seen_file"
+
+case "${1:-}" in
+  --enable)
+    rm -f "$disable_file"
+    notify-send --app-name="GitHub" "GitHub notifications enabled"
+    exit 0
+    ;;
+  --disable)
+    touch "$disable_file"
+    notify-send --app-name="GitHub" "GitHub notifications disabled"
+    exit 0
+    ;;
+  --toggle)
+    if [[ -e $disable_file ]]; then
+      rm -f "$disable_file"
+      notify-send --app-name="GitHub" "GitHub notifications enabled"
+    else
+      touch "$disable_file"
+      notify-send --app-name="GitHub" "GitHub notifications disabled"
+    fi
+    exit 0
+    ;;
+  --status)
+    [[ -e $disable_file ]] && echo disabled || echo enabled
+    exit 0
+    ;;
+esac
+
+[[ -e $disable_file ]] && exit 0
+command -v gh >/dev/null 2>&1 || exit 0
+command -v notify-send >/dev/null 2>&1 || exit 0
+gh auth status >/dev/null 2>&1 || exit 0
+
+filter='
+  .[]
+  | select(.unread)
+  | select(.reason as $r | (["assign","review_requested","mention","team_mention"] | index($r)))
+  | [.id, .reason, .subject.title, .repository.full_name, (.subject.url // "")]
+  | @tsv
+'
+
+records=$(gh api "notifications?participating=true" --paginate --jq "$filter" 2>/dev/null) || exit 0
+[[ -n $records ]] || { : >"$seen_file"; exit 0; }
+
+reason_label() {
+  case $1 in
+    assign) echo "Assigned" ;;
+    review_requested) echo "Review requested" ;;
+    mention) echo "Mentioned" ;;
+    team_mention) echo "Team mentioned" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+current_ids=()
+while IFS=$'\t' read -r id reason title repo url; do
+  current_ids+=("$id")
+  grep -qxF "$id" "$seen_file" && continue
+
+  web_url=${url/api.github.com\/repos/github.com}
+  web_url=${web_url/\/pulls\//\/pull\/}
+
+  notify-send \
+    --app-name="GitHub" \
+    --icon="dialog-information" \
+    "$(reason_label "$reason") · $repo" \
+    "$title${web_url:+$'\n'$web_url}"
+done <<<"$records"
+
+printf '%s\n' "${current_ids[@]}" >"$seen_file"
