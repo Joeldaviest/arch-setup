@@ -83,7 +83,6 @@ yt-dlp
 
 # Applications
 firefox
-bitwarden
 bitwarden-cli
 libreoffice-fresh
 xournalpp
@@ -177,3 +176,4 @@ python-gobject
 fcitx5
 fcitx5-gtk
 fcitx5-qt
+
