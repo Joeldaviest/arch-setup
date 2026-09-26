@@ -1,4 +1,5 @@
 # Packages removed from the managed setup during upgrades
+bitwarden-cli
 floorp-bin
 chromium
 mako
@@ -9,7 +10,6 @@ elephant-all-bin
 elephant-1password-bin
 elephant-aptpackages-bin
 elephant-archlinuxpkgs-bin
-elephant-bitwarden-bin
 elephant-bluetooth-bin
 elephant-bookmarks-bin
 elephant-dnfpackages-bin

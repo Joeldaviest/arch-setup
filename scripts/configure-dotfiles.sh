@@ -82,7 +82,7 @@ done
 obsolete_hypr_files=(
   environment.conf looknfeel.conf input.conf windows.conf media.conf clipboard.conf
   tiling.conf bindings.conf autostart.conf hyprland.conf apps.conf
-  apps/bitwarden.conf apps/browser.conf apps/hyprshot.conf apps/jetbrains.conf
+  apps/browser.conf apps/hyprshot.conf apps/jetbrains.conf
   apps/localsend.conf apps/pip.conf apps/steam.conf apps/system.conf
   apps/telegram.conf apps/terminals.conf apps/walker.conf apps/webcam-overlay.conf
 )

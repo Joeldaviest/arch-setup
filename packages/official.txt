@@ -83,7 +83,6 @@ yt-dlp
 
 # Applications
 firefox
-bitwarden-cli
 libreoffice-fresh
 xournalpp
 nautilus
