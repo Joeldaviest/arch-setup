@@ -63,8 +63,8 @@ the default handler for HTTP, HTTPS, and `mailto:` links. Navidrome has a
 conventional desktop entry and `SUPER+SHIFT+M` binding that open it in a normal
 Firefox tab.
 
-Wallpapers are copied to `~/.config/wallpapers`, so the desktop does not depend
-on the repository remaining in place. Each Hyprland session chooses a random
+`~/.config/wallpapers` is a symlink to `assets/wallpapers` in this repository,
+so wallpapers are managed in one place. Each Hyprland session chooses a random
 wallpaper, updates the `~/.config/wallpapers/current` symlink, and asks the
 session's `awww` daemon to display it with a short fade transition.
 

@@ -31,7 +31,7 @@ end
 function GetEntries()
     local directory = wallpaper_directory()
     local current = command_output("readlink -f -- " .. shell_quote(directory .. "/current") .. " 2>/dev/null")
-    local command = "find " .. shell_quote(directory) ..
+    local command = "find -H " .. shell_quote(directory) ..
         " -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png'" ..
         " -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.gif' \\) -print0 2>/dev/null | sort -z"
     local handle = io.popen(command)
@@ -46,7 +46,7 @@ function GetEntries()
 
     for path in output:gmatch("([^%z]+)%z") do
         local filename = path:match("([^/]+)$") or path
-        local is_current = path == current
+        local is_current = filename == (current:match("([^/]+)$") or current)
         table.insert(entries, {
             Text = (is_current and "✓ " or "") .. filename,
             Subtext = is_current and "Current wallpaper" or "Wallpaper",

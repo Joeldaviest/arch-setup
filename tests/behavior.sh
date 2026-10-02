@@ -613,7 +613,7 @@ test_power_profile_cycle_sets_next_profile_and_notifies() (
   grep -qF 'Power saver' "$notifications" || fail 'power profile change did not produce feedback'
 )
 
-test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts() (
+test_dotfile_setup_links_wallpapers_and_backs_up_conflicts() (
   test_home="$test_root/configure-home"
   mock_bin="$test_root/mock-bin"
   mkdir -p "$test_home" "$mock_bin"
@@ -625,17 +625,10 @@ test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts() (
   HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
 
   local_wallpapers="$test_home/.config/wallpapers"
-  [[ -d $local_wallpapers ]] || fail 'local wallpaper directory was not created'
-  [[ $(find "$local_wallpapers" -maxdepth 1 -type f | wc -l) == $(find "$root/assets/wallpapers" -maxdepth 1 -type f | wc -l) ]] || \
-    fail 'not all bundled wallpapers were copied'
-  [[ $(readlink -f "$local_wallpapers/current") == "$local_wallpapers/"* ]] || \
-    fail 'background still depends on the repository checkout'
+  [[ $(readlink "$local_wallpapers") == "$root/assets/wallpapers" ]] || \
+    fail 'wallpaper directory is not linked to the repository assets'
   find "$test_home/.local/state/arch-setup/backups" -type f -path '*/.zshrc' -exec grep -qF '# existing zsh configuration' {} \; || \
     fail 'existing dotfile was not backed up'
-
-  printf 'personal' >"$local_wallpapers/personal.jpg"
-  HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
-  [[ -f $local_wallpapers/personal.jpg ]] || fail 'setup removed a locally added wallpaper'
 )
 
 test_dotfile_setup_migrates_running_mako_to_swaync() (
@@ -841,7 +834,7 @@ test_idle_brightness_never_increases_and_restores
 test_storage_status_reports_separate_filesystems_and_swap
 test_tmux_new_session_names_from_current_directory
 test_power_profile_cycle_sets_next_profile_and_notifies
-test_dotfile_setup_copies_wallpapers_and_backs_up_conflicts
+test_dotfile_setup_links_wallpapers_and_backs_up_conflicts
 test_dotfile_setup_migrates_running_mako_to_swaync
 test_dotfile_setup_preserves_personal_mako_config
 test_dotfile_setup_restarts_running_hypridle

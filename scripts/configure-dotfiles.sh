@@ -143,8 +143,11 @@ mkdir -p "$weather_dir"
 [[ -e $weather_dir/location ]] || touch "$weather_dir/location"
 
 wallpaper_dir="$HOME/.config/wallpapers"
-mkdir -p "$wallpaper_dir"
-rsync -a "$SETUP_ROOT/assets/wallpapers/" "$wallpaper_dir/"
+if [[ -d $wallpaper_dir && ! -L $wallpaper_dir ]]; then
+  rsync -a --ignore-existing --exclude current "$wallpaper_dir/" "$SETUP_ROOT/assets/wallpapers/"
+  rm -rf "$wallpaper_dir"
+fi
+ln -sfn "$SETUP_ROOT/assets/wallpapers" "$wallpaper_dir"
 ARCH_SETUP_WALLPAPER_DIR="$wallpaper_dir" \
   "$SETUP_ROOT/dotfiles/bin/.local/bin/wallpaper-start" --set-only
 if [[ -n ${WAYLAND_DISPLAY:-} ]]; then

@@ -80,7 +80,7 @@ wallpaper_dir="$HOME/.config/wallpapers"
 [[ -d $wallpaper_dir ]] || fail 'local wallpaper directory is missing'
 [[ -L $wallpaper_dir/current ]] || fail 'active background is not a symlink'
 background=$(readlink -f "$wallpaper_dir/current")
-[[ $background == "$wallpaper_dir/"* && -f $background ]] || fail 'active background does not point to a local wallpaper'
+[[ $background == "$(readlink -f "$wallpaper_dir")/"* && -f $background ]] || fail 'active background does not point to a local wallpaper'
 
 if systemctl --failed --no-legend --plain | grep -q .; then
   systemctl --failed --no-legend --plain >&2
