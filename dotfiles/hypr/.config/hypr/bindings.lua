@@ -1,6 +1,7 @@
 -- Application bindings
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd("uwsm-app -- nautilus --new-window"), { description = "File manager" })
 hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("uwsm-app -- firefox --new-tab http://127.0.0.1:4533/"), { description = "Music" })
+hl.bind("SUPER + SHIFT + Y", hl.dsp.exec_cmd("uwsm-app -- firefox --new-tab http://127.0.0.1:7070/"), { description = "RSS" })
 hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("desktop-editor"), { description = "VSCodium" })
 hl.bind("SUPER + SHIFT + D", hl.dsp.exec_cmd("tui-launch lazydocker"), { description = "Docker" })
 

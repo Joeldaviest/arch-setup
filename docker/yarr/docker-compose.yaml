@@ -1,0 +1,9 @@
+services:
+  yarr:
+    image: ghcr.io/nkanaev/yarr:latest
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:7070:7070"
+    restart: unless-stopped
+    volumes:
+      - "$HOME/.local/share/yarr:/data"

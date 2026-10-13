@@ -11,6 +11,11 @@ mkdir -p "$HOME/.local/share/navidrome" "$HOME/Music"
 install -Dm644 "$SETUP_ROOT/docker/navidrome/docker-compose.yaml" "$HOME/.local/share/navidrome/docker-compose.yaml"
 sudo -E docker compose -f "$HOME/.local/share/navidrome/docker-compose.yaml" up -d
 
+note "Starting Yarr"
+mkdir -p "$HOME/.local/share/yarr"
+install -Dm644 "$SETUP_ROOT/docker/yarr/docker-compose.yaml" "$HOME/.local/share/yarr/docker-compose.yaml"
+sudo -E docker compose -f "$HOME/.local/share/yarr/docker-compose.yaml" up -d
+
 app_dir="$HOME/.local/share/applications"
 
 note "Installing Navidrome launcher"
@@ -22,6 +27,14 @@ install -Dm644 "$SETUP_ROOT/assets/icons/Navidrome.png" "$navidrome_icon"
   printf '%s\n' 'Terminal=false' 'Categories=AudioVideo;Audio;Network;' 'StartupNotify=true'
 } >"$app_dir/firefox-navidrome.desktop"
 chmod 0755 "$app_dir/firefox-navidrome.desktop"
+
+note "Installing Yarr launcher"
+{
+  printf '%s\n' '[Desktop Entry]' 'Version=1.0' 'Type=Application' 'Name=Yarr' 'Comment=RSS reader'
+  printf '%s\n' 'Exec=firefox --new-tab http://127.0.0.1:7070/' 'Icon=application-rss+xml'
+  printf '%s\n' 'Terminal=false' 'Categories=Network;News;Feed;' 'StartupNotify=true'
+} >"$app_dir/firefox-yarr.desktop"
+chmod 0755 "$app_dir/firefox-yarr.desktop"
 
 note "Configuring MIME defaults"
 xdg-mime default org.gnome.Nautilus.desktop inode/directory

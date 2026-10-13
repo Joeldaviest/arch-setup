@@ -61,7 +61,7 @@ hardware packages, backs up conflicting dotfiles, links the tracked dotfiles
 with GNU Stow, and configures services. Firefox is installed and configured as
 the default handler for HTTP, HTTPS, and `mailto:` links. Navidrome has a
 conventional desktop entry and `SUPER+SHIFT+M` binding that open it in a normal
-Firefox tab.
+Firefox tab, as does Yarr (RSS reader, `127.0.0.1:7070`) with `SUPER+SHIFT+Y`.
 
 `~/.config/wallpapers` is a symlink to `assets/wallpapers` in this repository,
 so wallpapers are managed in one place. Each Hyprland session chooses a random

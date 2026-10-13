@@ -91,6 +91,8 @@ grep -qF 'uwsm-app -- firefox --new-tab http://127.0.0.1:4533/' "$root/dotfiles/
   echo "Firefox Navidrome keybinding is missing" >&2
   exit 1
 }
+grep -qF 'firefox --new-tab http://127.0.0.1:7070/' "$root/scripts/configure-user.sh"
+grep -qF 'uwsm-app -- firefox --new-tab http://127.0.0.1:7070/' "$root/dotfiles/hypr/.config/hypr/bindings.lua"
 grep -qF 'exec uwsm-app -- firefox' "$root/dotfiles/bin/.local/bin/desktop-browser"
 grep -qF 'args+=(--private-window)' "$root/dotfiles/bin/.local/bin/desktop-browser"
 grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
