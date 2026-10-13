@@ -107,7 +107,7 @@ sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 # setup usable with an older package during upgrades by detecting the command.
 if LC_ALL=C powerprofilesctl --help 2>&1 | grep -qF 'configure-battery-aware'; then
   note "Enabling battery-aware power profile changes"
-  sudo powerprofilesctl configure-battery-aware --enable
+  sudo powerprofilesctl configure-battery-aware --enable || note "Battery-aware power profiles already enabled"
 else
   note "Battery-aware power profiles require power-profiles-daemon 0.30 or newer"
 fi
