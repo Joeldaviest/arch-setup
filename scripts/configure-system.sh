@@ -28,7 +28,6 @@ sudo install -Dm644 "$SETUP_ROOT/system/docker-resolved.conf" /etc/systemd/resol
 sudo install -Dm644 "$SETUP_ROOT/system/avahi-resolved.conf" /etc/systemd/resolved.conf.d/30-avahi.conf
 sudo install -Dm644 "$SETUP_ROOT/system/nvidia.conf" /etc/modprobe.d/arch-setup-nvidia.conf
 sudo install -Dm644 "$SETUP_ROOT/system/xpadneo.conf" /etc/modules-load.d/xpadneo.conf
-sudo install -Dm644 "$SETUP_ROOT/system/blacklist-xpad.conf" /etc/modprobe.d/blacklist-xpad.conf
 sudo install -Dm644 "$SETUP_ROOT/system/iwd.conf" /etc/iwd/main.conf
 sudo install -Dm644 "$SETUP_ROOT/system/20-wired.network" /etc/systemd/network/20-wired.network
 sudo install -Dm644 "$SETUP_ROOT/system/zram-generator.conf" /etc/systemd/zram-generator.conf
