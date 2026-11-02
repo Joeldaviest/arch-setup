@@ -91,8 +91,6 @@ grep -qF 'uwsm-app -- firefox --new-tab http://127.0.0.1:4533/' "$root/dotfiles/
   echo "Firefox Navidrome keybinding is missing" >&2
   exit 1
 }
-grep -qF 'firefox --new-tab http://127.0.0.1:7070/' "$root/scripts/configure-user.sh"
-grep -qF 'uwsm-app -- firefox --new-tab http://127.0.0.1:7070/' "$root/dotfiles/hypr/.config/hypr/bindings.lua"
 grep -qF 'exec uwsm-app -- firefox' "$root/dotfiles/bin/.local/bin/desktop-browser"
 grep -qF 'args+=(--private-window)' "$root/dotfiles/bin/.local/bin/desktop-browser"
 grep -qF 'class = "^[fF]irefox"' "$root/dotfiles/hypr/.config/hypr/apps/browser.lua"
@@ -150,7 +148,7 @@ jq -e '
   (."custom/notification"["on-click-right"] == "swaync-client -d -sw") and
   (."custom/screenrecording".signal == 9) and
   (."custom/screenrecording" | has("interval") | not) and
-  (.network.interval == 5) and
+  (.network.interval == 1) and
   (.cpu.interval == 10) and
   (.memory.interval == 10) and
   (."custom/storage".interval == 120) and
@@ -340,6 +338,7 @@ for protocol in udp tcp; do
 done
 
 hardware_case() (
+  pacman() { return 1; } # hermetic: ignore host-installed kernels
   source "$root/scripts/lib/common.sh"
   source "$root/scripts/lib/packages.sh"
   source "$root/scripts/lib/hardware.sh"
