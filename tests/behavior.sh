@@ -620,7 +620,8 @@ test_dotfile_setup_links_wallpapers_and_backs_up_conflicts() (
   printf '# existing zsh configuration\n' >"$test_home/.zshrc"
 
   printf '#!/bin/bash\nexit 0\n' >"$mock_bin/stow"
-  chmod +x "$mock_bin/stow"
+  printf '#!/bin/bash\nexit 1\n' >"$mock_bin/pgrep"
+  chmod +x "$mock_bin/stow" "$mock_bin/pgrep"
 
   HOME=$test_home PATH="$mock_bin:$PATH" "$root/scripts/configure-dotfiles.sh"
 
