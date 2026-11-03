@@ -96,8 +96,8 @@ in the background. Run `desktop-firmware check` to list pending updates or
 `desktop-firmware update` to apply them, or pick Firmware from the power menu
 (`SUPER+SHIFT+E`).
 
-The waybar weather module (`weather-status`) auto-detects location by IP via
-wttr.in. The bar shows only the current temperature; hover for conditions and
+The waybar weather module (`weather-status`) auto-detects location by IP
+(ipinfo.io) and fetches forecasts from Open-Meteo. The bar shows only the current temperature; hover for conditions and
 a short forecast, left-click for the detailed forecast, or right-click to pick
 an exact location. The picker searches Open-Meteo's worldwide geocoder, keeps
 recent choices, and can restore automatic IP detection. It stores precise

@@ -17,7 +17,6 @@ esac
 location=""
 [[ -s $location_file ]] && location=$(<"$location_file")
 location=${location//$'\r'/}
-query_location=${location// /+}
 configured_label=""
 [[ -s $location_label_file ]] && configured_label=$(<"$location_label_file")
 configured_label=${configured_label//$'\r'/}
@@ -27,7 +26,7 @@ mkdir -p "$cache_dir"
 cache_matches_location() {
   [[ -s $cache_file && -f $cache_location_file ]] || return 1
   [[ $(<"$cache_location_file") == "$location" ]] || return 1
-  jq -e '.current_condition[0].temp_C and .weather[0]' "$cache_file" >/dev/null 2>&1
+  jq -e '.current.temperature_2m != null and .daily.time[0]' "$cache_file" >/dev/null 2>&1
 }
 
 cache_is_fresh() {
@@ -37,12 +36,36 @@ cache_is_fresh() {
   (( $(date +%s) - modified < cache_max_age ))
 }
 
+# Sets lat, lon, ip_label. "~LAT,LON" is written by weather-location; anything
+# else (empty = automatic) is located by IP.
+resolve_coordinates() {
+  ip_label=""
+  if [[ $location =~ ^~(-?[0-9.]+),(-?[0-9.]+)$ ]]; then
+    lat=${BASH_REMATCH[1]} lon=${BASH_REMATCH[2]}
+    return 0
+  fi
+  local ip
+  ip=$(curl -A 'arch-setup-weather/1.0' -fsS --max-time 8 https://ipinfo.io/json 2>/dev/null) || return 1
+  IFS=$'\t' read -r lat lon ip_label < <(
+    jq -r '(.loc // "" | split(",")) as $c |
+      select($c | length == 2) |
+      [$c[0], $c[1], ([.city, .region] | map(select(. != null and . != "")) | unique_by(.) | join(", "))] | @tsv' <<<"$ip"
+  ) || return 1
+  [[ -n ${lat:-} && -n ${lon:-} ]]
+}
+
 stale=false
 if ! cache_is_fresh; then
   download=$(mktemp "$cache_dir/weather.json.XXXXXX")
-  if curl -A 'arch-setup-weather/1.0' -fsS --max-time 8 \
-      "https://wttr.in/${query_location}?format=j1" >"$download" 2>/dev/null &&
-      jq -e '.current_condition[0].temp_C and .weather[0]' "$download" >/dev/null 2>&1; then
+  if resolve_coordinates &&
+      curl -A 'arch-setup-weather/1.0' -fsS --max-time 8 -G \
+        'https://api.open-meteo.com/v1/forecast' \
+        --data-urlencode "latitude=$lat" --data-urlencode "longitude=$lon" \
+        --data 'current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,visibility' \
+        --data 'daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset' \
+        --data 'timezone=auto&forecast_days=2' 2>/dev/null |
+      jq -ce --arg label "$ip_label" '. + {ip_label: $label}' >"$download" 2>/dev/null &&
+      jq -e '.current.temperature_2m != null and .daily.time[0]' "$download" >/dev/null 2>&1; then
     mv -f "$download" "$cache_file"
     printf '%s' "$location" >"$cache_location_file"
   else
@@ -59,27 +82,41 @@ if ! cache_matches_location; then
   exit 0
 fi
 
-temperature=$(jq -r '.current_condition[0].temp_C + "°C"' "$cache_file")
+temperature=$(jq -r '(.current.temperature_2m | round | tostring) + "°C"' "$cache_file")
 
-tooltip=$(jq -r --arg configured_label "$configured_label" '
-  .current_condition[0] as $current |
-  .nearest_area[0] as $area |
-  .weather[0] as $today |
-  .weather[1] as $tomorrow |
+jq_defs='
+  def desc:
+    if . == 0 then "Clear"
+    elif . == 1 then "Mainly clear"
+    elif . == 2 then "Partly cloudy"
+    elif . == 3 then "Overcast"
+    elif . == 45 or . == 48 then "Fog"
+    elif . >= 51 and . <= 57 then "Drizzle"
+    elif . >= 61 and . <= 67 then "Rain"
+    elif . >= 71 and . <= 77 then "Snow"
+    elif . >= 80 and . <= 82 then "Showers"
+    elif . == 85 or . == 86 then "Snow showers"
+    elif . >= 95 then "Thunderstorm"
+    else "Unknown" end;
+  def compass:
+    ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][(((. + 11.25) / 22.5) | floor) % 16];
+  def clock: strptime("%Y-%m-%dT%H:%M") | strftime("%I:%M %p");
   def area_name:
-    if $configured_label != "" then $configured_label else
-    ($area.areaName[0].value // "Current location") as $name |
-    ($area.region[0].value // "") as $region |
-    if $region == "" or $region == $name then $name else "\($name), \($region)" end
-    end;
-  def rain($day):
-    ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
+    if $configured_label != "" then $configured_label
+    elif (.ip_label // "") != "" then .ip_label
+    else "Current location" end;
+  def rain($i): .daily.precipitation_probability_max[$i] // 0;
+  def range($i): "\(.daily.temperature_2m_min[$i] | round)–\(.daily.temperature_2m_max[$i] | round)°C";
+'
+
+tooltip=$(jq -r --arg configured_label "$configured_label" "$jq_defs"'
+  .current as $c |
   [
     area_name,
-    "\($current.weatherDesc[0].value // "Unknown") · \($current.temp_C)°C · feels like \($current.FeelsLikeC)°C",
-    "Humidity \($current.humidity)% · Wind \($current.winddir16Point) \($current.windspeedKmph) km/h",
-    "Today \($today.mintempC)–\($today.maxtempC)°C · rain \(rain($today))%",
-    (if $tomorrow then "Tomorrow \($tomorrow.mintempC)–\($tomorrow.maxtempC)°C · rain \(rain($tomorrow))%" else empty end)
+    "\($c.weather_code | desc) · \($c.temperature_2m | round)°C · feels like \($c.apparent_temperature | round)°C",
+    "Humidity \($c.relative_humidity_2m)% · Wind \($c.wind_direction_10m | compass) \($c.wind_speed_10m | round) km/h",
+    "Today \(range(0)) · rain \(rain(0))%",
+    (if .daily.time[1] then "Tomorrow \(range(1)) · rain \(rain(1))%" else empty end)
   ] | join("\n") + "\n\nLeft click: details · Right click: change location"
 ' "$cache_file")
 
@@ -98,33 +135,22 @@ case $mode in
     printf '%s\n' "$temperature"
     ;;
   --detail)
-    jq -r --arg configured_label "$configured_label" '
-      .current_condition[0] as $current |
-      .nearest_area[0] as $area |
-      .weather[0] as $today |
-      .weather[1] as $tomorrow |
-      def area_name:
-        if $configured_label != "" then $configured_label else
-        ($area.areaName[0].value // "Current location") as $name |
-        ($area.region[0].value // "") as $region |
-        if $region == "" or $region == $name then $name else "\($name), \($region)" end
-        end;
-      def rain($day):
-        ([$day.hourly[]?.chanceofrain | tonumber?] | max // 0);
-      def day($label; $value):
-        if $value then
-          "\($label)\n  Temperature  \($value.mintempC)–\($value.maxtempC)°C\n  Rain chance  \(rain($value))%\n  Sunrise      \($value.astronomy[0].sunrise // "—")\n  Sunset       \($value.astronomy[0].sunset // "—")"
+    jq -r --arg configured_label "$configured_label" "$jq_defs"'
+      .current as $c |
+      def day($label; $i):
+        if .daily.time[$i] then
+          "\($label)\n  Temperature  \(range($i))\n  Rain chance  \(rain($i))%\n  Sunrise      \(.daily.sunrise[$i] | clock)\n  Sunset       \(.daily.sunset[$i] | clock)"
         else empty end;
       "Weather · \(area_name)\n\n" +
       "Current\n" +
-      "  Conditions   \($current.weatherDesc[0].value // "Unknown")\n" +
-      "  Temperature  \($current.temp_C)°C\n" +
-      "  Feels like   \($current.FeelsLikeC)°C\n" +
-      "  Humidity     \($current.humidity)%\n" +
-      "  Wind         \($current.winddir16Point) \($current.windspeedKmph) km/h\n" +
-      "  Visibility   \($current.visibility // "—") km\n" +
-      "  UV index     \($current.uvIndex // "—")\n\n" +
-      day("Today"; $today) + "\n\n" + day("Tomorrow"; $tomorrow)
+      "  Conditions   \($c.weather_code | desc)\n" +
+      "  Temperature  \($c.temperature_2m | round)°C\n" +
+      "  Feels like   \($c.apparent_temperature | round)°C\n" +
+      "  Humidity     \($c.relative_humidity_2m)%\n" +
+      "  Wind         \($c.wind_direction_10m | compass) \($c.wind_speed_10m | round) km/h\n" +
+      "  Visibility   \(if $c.visibility != null then ($c.visibility / 1000 | round) else "—" end) km\n" +
+      "  UV index     \(.daily.uv_index_max[0] // "—" | if type == "number" then round else . end)\n\n" +
+      day("Today"; 0) + "\n\n" + day("Tomorrow"; 1)
     ' "$cache_file"
     if $stale; then
       printf '\n\nCached conditions · update unavailable\n'

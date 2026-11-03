@@ -291,31 +291,22 @@ test_weather_status_uses_rich_cached_conditions() (
   fixture="$test_root/weather.json"
   curl_log="$test_root/weather-curl.log"
   mkdir -p "$test_home/.config/weather-status" "$mock_bin"
-  printf 'Bengaluru\n' >"$test_home/.config/weather-status/location"
+  printf '~12.97,77.59\n' >"$test_home/.config/weather-status/location"
   printf 'Selected Bengaluru, India\n' >"$test_home/.config/weather-status/location-label"
 
   cat >"$fixture" <<'EOF'
 {
-  "current_condition": [{
-    "temp_C": "27", "FeelsLikeC": "29", "humidity": "71",
-    "weatherDesc": [{"value": "Partly cloudy"}], "winddir16Point": "SW",
-    "windspeedKmph": "12", "visibility": "10", "uvIndex": "6"
-  }],
-  "nearest_area": [{
-    "areaName": [{"value": "Bengaluru"}], "region": [{"value": "Karnataka"}]
-  }],
-  "weather": [
-    {
-      "mintempC": "21", "maxtempC": "31",
-      "hourly": [{"chanceofrain": "20"}, {"chanceofrain": "35"}],
-      "astronomy": [{"sunrise": "06:05 AM", "sunset": "06:42 PM"}]
-    },
-    {
-      "mintempC": "22", "maxtempC": "30",
-      "hourly": [{"chanceofrain": "45"}],
-      "astronomy": [{"sunrise": "06:05 AM", "sunset": "06:41 PM"}]
-    }
-  ]
+  "current": {
+    "temperature_2m": 27.2, "apparent_temperature": 29.1, "relative_humidity_2m": 71,
+    "weather_code": 2, "wind_speed_10m": 12, "wind_direction_10m": 225, "visibility": 10000
+  },
+  "daily": {
+    "time": ["2026-11-03", "2026-11-04"],
+    "temperature_2m_min": [21, 22], "temperature_2m_max": [31, 30],
+    "precipitation_probability_max": [35, 45], "uv_index_max": [6.1, 6.2],
+    "sunrise": ["2026-11-03T06:05", "2026-11-04T06:05"],
+    "sunset": ["2026-11-03T18:42", "2026-11-04T18:41"]
+  }
 }
 EOF
 
