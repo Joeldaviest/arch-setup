@@ -17,6 +17,7 @@ btrfs-progs
 snapper
 snap-pac
 pacman-contrib
+reflector
 
 alacritty
 hyprland
